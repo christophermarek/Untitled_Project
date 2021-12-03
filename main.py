@@ -100,18 +100,17 @@ def generateData():
     
     destination = "demo_file.csv"
     output = dataGenerator.generateDataSet(1000, destination)
+    # Class supports additional outputs with changing input ranges to generate multiple datasets
     
     print(output[1])
     if not output[0]:
         return
-    
-    
 
-    # Then output table of data showing few rows
-    df = pd.read_csv(destination)
+    print("\n")
+
+    # output table of data showing few rows
+    df = pd.read_csv("output/" + destination)
     print(df.head()) 
-    
-    # Then output scatterplot of data generated
-    # prob should have an output folder with the file, and figures
+
 
 generateData()

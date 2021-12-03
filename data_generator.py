@@ -1,5 +1,6 @@
 
 import random
+import os
 
 class DataGenerator():
     
@@ -38,8 +39,11 @@ class DataGenerator():
         if not isinstance(destination, str):
             return [False, "Invalid destination paramater passed"]
         
+        # Create output folder
+        os.makedirs("output", exist_ok=True)
+
         #will reset file every time it runs
-        file = open(destination, "w")
+        file = open("output/" + destination, "w")
         file.write("moneyness,timetomaturity,dividendrate,interestrate\n")
 
         for i in range(size):
