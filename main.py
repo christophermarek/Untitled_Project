@@ -33,6 +33,8 @@ def pyvolib(S, K, sigma, r, flag: character, t, q):
     annual_theta_calc = theta(flag, S, K, t, r, sigma, q) * 365
     vega_calc = vega(flag, S, K, t, r, sigma, q)
 
+    print(price)
+
     return delta_calc, gamma_calc, rho_calc, annual_theta_calc, vega_calc
 
 def getYahooStockPrices():
@@ -93,13 +95,13 @@ def main():
     #The link below shows where to get the real world data
     #https://medium.com/swlh/calculating-option-premiums-using-the-black-scholes-model-in-python-e9ed227afbee
 
-# main()
+main()
 
 def generateData():
     dataGenerator = data_generator.DataGenerator()
     
     destination = "demo_file.csv"
-    output = dataGenerator.generateDataSet(1000, destination)
+    output = dataGenerator.generateDataSet(3000000, destination)
     # Class supports additional outputs with changing input ranges to generate multiple datasets
     
     print(output[1])
@@ -113,4 +115,4 @@ def generateData():
     print(df.head()) 
 
 
-generateData()
+# generateData()
