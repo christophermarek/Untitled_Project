@@ -73,7 +73,8 @@ class BlackScholesModel_Simple(nn.Module):
                                    nn.ReLU(),
                                    nn.Linear(hidden_sizes[0], hidden_sizes[1]),
                                    nn.ReLU(),
-                                   nn.Linear(hidden_sizes[1], output_size))
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
 
     def forward(self, input):
         x = self.model(input)
@@ -134,24 +135,25 @@ def main():
 
     # build the model
     blackscholesmodel = BlackScholesModel_Simple()
-    model = torch.load('model.ckpt')
+    # model = torch.load('model.ckpt')
     # model.eval()
     criterion = nn.MSELoss()
     # use LBFGS as optimizer since we can load the whole data to train
     # lr = learning rate
     # Will need to test different learning rates and optimizers
-    # optimizer = optim.LBFGS(blackscholesmodel.parameters(), lr=0.8)
-    # #begin to train
-    # for i in range(20):
-    #     print('STEP: ', i)
-    #     def closure():
-    #         optimizer.zero_grad()
-    #         out = blackscholesmodel(X_train.float())
-    #         loss = criterion(out, y_train.float())
-    #         # print('loss:', loss.item())
-    #         loss.backward()
-    #         return loss
-    #     optimizer.step(closure)
+    optimizer = optim.LBFGS(blackscholesmodel.parameters(), lr=0.5)
+    
+    #begin to train
+    for i in range(20):
+        print('STEP: ', i)
+        def closure():
+            optimizer.zero_grad()
+            out = blackscholesmodel(X_train.float())
+            loss = criterion(out, y_train.float())
+            # print('loss:', loss.item())
+            loss.backward()
+            return loss
+        optimizer.step(closure)
 
     # After move my predictions to after the training
     # begin to predict, no need to track gradient here
@@ -166,11 +168,11 @@ def main():
     # Maybe x axis is index
     # y axis is call value
     xAxis = []
-    for n in range(100):
+    for n in range(3000):
         xAxis.append(n)
 
-    plt.scatter(xAxis, y_test.float()[0:100],marker=".", label="ytest", color='black')
-    plt.scatter(xAxis, pred[0:100],marker=".", label="ml prediction", color='red')
+    plt.scatter(xAxis, y_test.float()[0:3000],marker=".", label="ytest", color='black')
+    plt.scatter(xAxis, pred[0:3000],marker=".", label="ml prediction", color='red')
     plt.legend()
     plt.show()
 
