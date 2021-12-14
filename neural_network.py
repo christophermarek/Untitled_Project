@@ -10,6 +10,8 @@ from sklearn.model_selection import train_test_split
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
 
 
+# 6 outputs one for each greek.
+# But thats later once I set this up properly
 def neural_network():
 
     # Get dataset
@@ -47,7 +49,7 @@ def neural_network():
                           nn.Linear(hidden_sizes[0], hidden_sizes[1]),
                           nn.ReLU(),
                           nn.Linear(hidden_sizes[1], output_size),
-                          nn.LogSoftmax(dim=1))
+                          nn.LogSoftmax)
     print(model)
 
     # https://stackoverflow.com/questions/46170814/how-to-train-pytorch-model-with-numpy-data-and-batch-size
@@ -58,6 +60,24 @@ def neural_network():
     # THis official example I can just copy most of it, it looks right too and can load local files
     # like the other tutorial did instead of a slow to load df.
 # neural_network()
+
+
+class BlackScholesModel_Simple(nn.Module):
+
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [10, 10]
+        output_size = 1
+        super(BlackScholesModel_Simple, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size))
+
+    def forward(self, input):
+        x = self.model(input)
+        return x
 
 
 def main():
@@ -95,53 +115,67 @@ def main():
 
     X = df.drop(columns="BS-Call")
     y = df['BS-Call']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0)
+
     # convert to tensors
-    X_train = torch.tensor(X_train.values)
-    y_train = torch.tensor(y_train.values)
-    X_test = torch.tensor(X_test.values)
-    y_test = torch.tensor(y_test.values)
+    X_train = torch.tensor(X_train.values, dtype=torch.float64)
+    X_test = torch.tensor(X_test.values, dtype=torch.float64)
+
+
+    # Need to reshape y tensor so it has the same shape as X
+    y_train = torch.tensor(y_train.values, dtype=torch.float64)
+    y_test = torch.tensor(y_test.values, dtype=torch.float64)
+
+    new_shape_ytrain = (len(y_train), 1)
+    y_train = y_train.view(new_shape_ytrain)
+    new_shape_ytest = (len(y_test), 1)
+    y_test = y_test.view(new_shape_ytest)
 
     # build the model
-    # seq = Sequence()
-    # seq.double()
-    # criterion = nn.MSELoss()
-    # # use LBFGS as optimizer since we can load the whole data to train
-    # optimizer = optim.LBFGS(seq.parameters(), lr=0.8)
+    blackscholesmodel = BlackScholesModel_Simple()
+    model = torch.load('model.ckpt')
+    # model.eval()
+    criterion = nn.MSELoss()
+    # use LBFGS as optimizer since we can load the whole data to train
+    # lr = learning rate
+    # Will need to test different learning rates and optimizers
+    # optimizer = optim.LBFGS(blackscholesmodel.parameters(), lr=0.8)
     # #begin to train
-    # for i in range(opt.steps):
+    # for i in range(20):
     #     print('STEP: ', i)
     #     def closure():
     #         optimizer.zero_grad()
-    #         out = seq(input)
-    #         loss = criterion(out, target)
-    #         print('loss:', loss.item())
+    #         out = blackscholesmodel(X_train.float())
+    #         loss = criterion(out, y_train.float())
+    #         # print('loss:', loss.item())
     #         loss.backward()
     #         return loss
     #     optimizer.step(closure)
-    #     # begin to predict, no need to track gradient here
-    #     with torch.no_grad():
-    #         future = 1000
-    #         pred = seq(test_input, future=future)
-    #         loss = criterion(pred[:, :-future], test_target)
-    #         print('test loss:', loss.item())
-    #         y = pred.detach().numpy()
-    #     # draw the result
-    #     plt.figure(figsize=(30,10))
-    #     plt.title('Predict future values for time sequences\n(Dashlines are predicted values)', fontsize=30)
-    #     plt.xlabel('x', fontsize=20)
-    #     plt.ylabel('y', fontsize=20)
-    #     plt.xticks(fontsize=20)
-    #     plt.yticks(fontsize=20)
-    #     def draw(yi, color):
-    #         plt.plot(np.arange(input.size(1)), yi[:input.size(1)], color, linewidth = 2.0)
-    #         plt.plot(np.arange(input.size(1), input.size(1) + future), yi[input.size(1):], color + ':', linewidth = 2.0)
-    #     draw(y[0], 'r')
-    #     draw(y[1], 'g')
-    #     draw(y[2], 'b')
-    #     plt.savefig('predict%d.pdf'%i)
-    #     plt.close()
+
+    # After move my predictions to after the training
+    # begin to predict, no need to track gradient here
+    print(len(y_test.float()))
+    with torch.no_grad():
+        pred = blackscholesmodel(X_test.float())
+        # loss = criterion(pred, y_test.float())
+        # print('test loss:', loss.item())
+    cost = criterion(pred, y_test.float())
+    print("mean squared error:", cost.item())
+    # Now probably plot them to see.
+    # Maybe x axis is index
+    # y axis is call value
+    xAxis = []
+    for n in range(100):
+        xAxis.append(n)
+
+    plt.scatter(xAxis, y_test.float()[0:100],marker=".", label="ytest", color='black')
+    plt.scatter(xAxis, pred[0:100],marker=".", label="ml prediction", color='red')
+    plt.legend()
+    plt.show()
+
+    # Save the model checkpoint
+    torch.save(blackscholesmodel.state_dict(), 'model.ckpt')
 
 
 main()
