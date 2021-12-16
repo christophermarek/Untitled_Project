@@ -6,6 +6,9 @@ from time import time
 from torch import nn, optim
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from datetime import datetime
+import os
+
 
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
 
@@ -52,7 +55,7 @@ def testModel(model, lossFN, testInput, testOutput):
     print("mean squared error:", cost.item())
     return pred
 
-def main():
+def main(trainOrTestMode, models):
     # The "forward pass" refers to calculation process, values of the output layers from the inputs data. It's traversing through all neurons from first to last layer.
     # A loss function is calculated from the output values.
     # And then "backward pass" refers to process of counting changes in weights (de facto learning), using gradient descent algorithm (or similar). Computation is made from last layer, backward to the first layer.
@@ -85,6 +88,9 @@ def main():
 
     # Sort by time to maturity so model has sense of time?
     # THis actually improves performance substantially, note this in description
+    # In description of execution, write a notes section and make this a point
+    # - As seen in the literature review, keeping a time ordering is important for the ML
+    # algoruthm to get a sense of time ordering.
     df = df.sort_values(by=['timetomaturity'], ascending=True)
 
     X = df.drop(columns="BS-Call")
@@ -103,43 +109,73 @@ def main():
     y_train = y_train.view(new_shape_ytrain)
     new_shape_ytest = (len(y_test), 1)
     y_test = y_test.view(new_shape_ytest)
-
-    # build the model
-    blackscholesmodel = BlackScholesModel_Simple()
-    model = torch.load('model.ckpt')
-    # model.eval()
-    criterion = nn.MSELoss()
-
-    # use LBFGS as optimizer since we can load the whole data to train
-    # lr = learning rate
-    # Will need to test different learning rates and optimizers
-    optimizer = optim.LBFGS(blackscholesmodel.parameters(), lr=0.5)
-
-    # train model
-    trainModel(blackscholesmodel, optimizer, criterion, X_train, y_train, 20)
-    # test model and get output
-    pred = testModel(blackscholesmodel, criterion, X_test, y_test)
     
-    # NOW NEED A WAY TO QUANTIFY ACCURACY BETTER, I LIKE THE TWO PLOTS BUT THEY STILL ARE NOT GOOD COPY YET
-    
-    # Then results need to be saved somewhere so i can compare all models
+    for model in models:
+        # build the model
+        blackscholesmodel = BlackScholesModel_Simple()
+        if(trainOrTestMode == 1):
+            blackscholesmodel.load_state_dict(torch.load('model.ckpt'))
 
-    # Maybe x axis is index
-    # y axis is call value
-    xAxis = []
-    for n in range(3000):
-        xAxis.append(n)
+        criterion = nn.MSELoss()
 
-    fig, ax = plt.subplots(2, 1)
+        # use LBFGS as optimizer since we can load the whole data to train
+        # lr = learning rate
+        # Will need to test different learning rates and optimizers
+        optimizer = optim.LBFGS(blackscholesmodel.parameters(), lr=0.5)
 
-    ax[0].scatter(xAxis, pred[0:3000],marker=".", label="ml prediction", color='red')
-    ax[0].scatter(xAxis, y_test.float()[0:3000],marker=".", label="y_test", color='black')
-    ax[0].legend()
-    ax[1].scatter(y_test.float()[0:3000], pred[0:3000],marker=".")
-    plt.show()
+        # train model
+        # SAVE MODEL HERE
+
+
+        if trainOrTestMode == 0 or trainOrTestMode == 2:
+            trainModel(blackscholesmodel, optimizer, criterion, X_train, y_train, 20)
+            torch.save(blackscholesmodel.state_dict(), 'model.ckpt')
+
+        # test model and get output
+        if trainOrTestMode == 1 or trainOrTestMode == 2:
+            pred = testModel(blackscholesmodel, criterion, X_test, y_test)
+        
+        # NOW NEED A WAY TO QUANTIFY ACCURACY BETTER, I LIKE THE TWO PLOTS BUT THEY STILL ARE NOT GOOD COPY YET
+        
+        # Then results need to be saved somewhere so i can compare all models
+
+        # Maybe x axis is index
+        # y axis is call value
+        xAxis = []
+        for n in range(300):
+            xAxis.append(n)
+
+        fig, ax = plt.subplots(2, 1)
+
+        # LABEL AXES FOR GOOD COPY
+        # MAKE X VALUES TIME TO MATURITIES INSTEAD LOL THAT MAKES WAY MORE SENSE THAN JUST INDEX,
+        # AND THEY ARE ORDERED BY TIME TO MATURITY ANYWAYS, EASIER TO SPOT A PATTERN.
+        ax[0].scatter(xAxis, pred[0:300],marker=".", label="ml prediction", color='red')
+        ax[0].scatter(xAxis, y_test.float()[0:300],marker=".", label="y_test", color='black')
+        ax[0].legend()
+        ax[1].scatter(y_test.float()[0:300], pred[0:300],marker=".")
+
+        # Save plots to an output dir, title model name and date/time ran
+        if not os.path.exists('model_output'):
+            os.makedirs('model_output')
+        now = datetime.now()
+        plt.savefig('model_output/' + model + now.strftime("%d_%m_%Y_%H_%M_%S") + '.png')
+
 
     # Save the model checkpoint
-    torch.save(blackscholesmodel.state_dict(), 'model.ckpt')
 
+def preRun():
+    # get params
+    mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
+    mode = int(mode)
+    if not (mode == 1 or mode == 0):
+        print('invalid mode paramaters')
+        return
 
-main()
+    models = [
+        "simpleblackscholes"
+    ]
+    
+    main(mode, models)
+
+preRun()
