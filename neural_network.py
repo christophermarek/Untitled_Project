@@ -61,6 +61,7 @@ class BlackScholesModel_Simple(nn.Module):
                                    nn.Linear(hidden_sizes[0], hidden_sizes[1]),
                                    nn.ReLU(),
                                    nn.Linear(hidden_sizes[1], output_size),
+                                   nn.ReLU(),
                                    )
 
     def forward(self, input):
@@ -108,7 +109,7 @@ def main(trainOrTestMode, models, dataSet):
     torch.manual_seed(0)
     
     X_train, X_test, y_train, y_test = dataSet
-    
+        
     for model in models:
         
         # build the model
@@ -140,29 +141,41 @@ def main(trainOrTestMode, models, dataSet):
             # Then results need to be saved somewhere so i can compare all models
             # NOW NEED A WAY TO QUANTIFY ACCURACY BETTER, I LIKE THE TWO PLOTS BUT THEY STILL ARE NOT GOOD COPY YET
 
+            now = datetime.now()
+            
+            # Save plots to an output dir, title model name and date/time ran
+            if not os.path.exists('model_output'):
+                os.makedirs('model_output')
+            if not os.path.exists('model_output/' + model):
+                os.makedirs('model_output/' + model)
+            if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
+                os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
+            
             # Maybe x axis is index
             # y axis is call value
             xAxis = []
             for n in range(300):
-                xAxis.append(n)
+                xAxis.append(X_test[n][1])
 
-            fig, ax = plt.subplots(2, 1)
+            # fig, ax = plt.subplots(2, 1)
 
             # LABEL AXES FOR GOOD COPY
             # MAKE X VALUES TIME TO MATURITIES INSTEAD LOL THAT MAKES WAY MORE SENSE THAN JUST INDEX,
             # AND THEY ARE ORDERED BY TIME TO MATURITY ANYWAYS, EASIER TO SPOT A PATTERN.
-            ax[0].scatter(xAxis, pred[0:300],marker=".", label="ml prediction", color='red')
-            ax[0].scatter(xAxis, y_test.float()[0:300],marker=".", label="y_test", color='black')
-            ax[0].legend()
-            ax[1].scatter(y_test.float()[0:300], pred[0:300],marker=".")
+            plt.scatter(xAxis, pred[0:300],marker=".", label="ml prediction", color='red')
+            plt.scatter(xAxis, y_test.float()[0:300],marker=".", label="y_test", color='black')
+            plt.xlabel('Time To Maturity')
+            plt.ylabel('Option Price')
+            plt.legend()
+            plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + "vsMaturity" + '.png')
+            plt.clf()
 
-            # Save plots to an output dir, title model name and date/time ran
-            if not os.path.exists('model_output'):
-                os.makedirs('model_output')
-            now = datetime.now()
-            plt.savefig('model_output/' + model + now.strftime("%d_%m_%Y_%H_%M_%S") + '.png')
-        
-
+            
+            plt.scatter(y_test.float()[0:300], pred[0:300],marker=".")
+            plt.xlabel('Test Option Price')
+            plt.ylabel('Predicted Option Price')
+            plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + "testvsprediction" + '.png')
+            
 def preRun():
     # get params
     mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
