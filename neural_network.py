@@ -7,16 +7,20 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from datetime import datetime
 import os
+# local file
+import models
+
 
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
+# It contains code too I didnt realize this before, shows how they generate their data exactly
+
 # 6 outputs for 1 greek but thats later.
 
 def loadData(fileDir):
 
-     # load data and make training set
+    # load data and make training set
     # Get dataset
     filePath = fileDir
-
     # output table of data showing few rows
     df = False
     try:
@@ -49,24 +53,7 @@ def loadData(fileDir):
 
     return [X_train, X_test, y_train, y_test]
 
-class BlackScholesModel_Simple(nn.Module):
 
-    def __init__(self):
-        input_size = 5
-        hidden_sizes = [10, 10]
-        output_size = 1
-        super(BlackScholesModel_Simple, self).__init__()
-        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
-                                   nn.ReLU(),
-                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
-                                   nn.ReLU(),
-                                   nn.Linear(hidden_sizes[1], output_size),
-                                   nn.ReLU(),
-                                   )
-
-    def forward(self, input):
-        x = self.model(input)
-        return x
 
 def trainModel(model, optimizer, lossFN, input, output, numEpochs):
     model.train()
@@ -90,7 +77,7 @@ def testModel(model, lossFN, testInput, testOutput):
     print("mean squared error:", cost.item())
     return pred
 
-def main(trainOrTestMode, models, dataSet):
+def main(trainOrTestMode, models, dataSet, hyperparam_config):
     # The "forward pass" refers to calculation process, values of the output layers from the inputs data. It's traversing through all neurons from first to last layer.
     # A loss function is calculated from the output values.
     # And then "backward pass" refers to process of counting changes in weights (de facto learning), using gradient descent algorithm (or similar). Computation is made from last layer, backward to the first layer.
@@ -109,72 +96,70 @@ def main(trainOrTestMode, models, dataSet):
     torch.manual_seed(0)
     
     X_train, X_test, y_train, y_test = dataSet
-        
+    
     for model in models:
-        
-        # build the model
-        runningModel = False
-        if model == 'simpleblackscholes': runningModel = BlackScholesModel_Simple()
-        if not model: 
-            print('invalid model name passed')
-            return
-
-        if(trainOrTestMode == 1):
-            runningModel.load_state_dict(torch.load(model + '.ckpt'))
-
-        criterion = nn.MSELoss()
-
-        # use LBFGS as optimizer since we can load the whole data to train
-        # lr = learning rate
-        # Will need to test different learning rates and optimizers
-        optimizer = optim.LBFGS(runningModel.parameters(), lr=0.5)
-
-        # train model
-        if trainOrTestMode == 0 or trainOrTestMode == 2:
-            trainModel(runningModel, optimizer, criterion, X_train, y_train, 20)
-            torch.save(runningModel.state_dict(), model + '.ckpt')
-
-        # test model and get output
-        if trainOrTestMode == 1 or trainOrTestMode == 2:
-            pred = testModel(runningModel, criterion, X_test, y_test)
-
-            # Then results need to be saved somewhere so i can compare all models
-            # NOW NEED A WAY TO QUANTIFY ACCURACY BETTER, I LIKE THE TWO PLOTS BUT THEY STILL ARE NOT GOOD COPY YET
-
-            now = datetime.now()
+        for hyperParamConfigEntry in hyperparam_config:
+            learningRate = hyperParamConfigEntry[0]
+            numNeurons = hyperParamConfigEntry[1]
             
-            # Save plots to an output dir, title model name and date/time ran
-            if not os.path.exists('model_output'):
-                os.makedirs('model_output')
-            if not os.path.exists('model_output/' + model):
-                os.makedirs('model_output/' + model)
-            if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
-                os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
+            # build the model
+            runningModel = False
+            if model == 'simpleblackscholes': runningModel = models.BlackScholesModel_Simple(numNeurons)
+            if model == 'simpleblackscholes2layer': runningModel = models.BlackScholesModel_Simple2Layer(numNeurons)
+            if model == 'simpleblackscholes3layer': runningModel = models.BlackScholesModel_Simple3Layer(numNeurons)
+            if model == 'simpleblackscholes4layer': runningModel = models.BlackScholesModel_Simple4Layer(numNeurons)
             
-            # Maybe x axis is index
-            # y axis is call value
-            xAxis = []
-            for n in range(300):
-                xAxis.append(X_test[n][1])
+            if not model: 
+                print('invalid model name passed')
+                return
 
-            # fig, ax = plt.subplots(2, 1)
+            if(trainOrTestMode == 1):
+                runningModel.load_state_dict(torch.load(model + '.ckpt'))
 
-            # LABEL AXES FOR GOOD COPY
-            # MAKE X VALUES TIME TO MATURITIES INSTEAD LOL THAT MAKES WAY MORE SENSE THAN JUST INDEX,
-            # AND THEY ARE ORDERED BY TIME TO MATURITY ANYWAYS, EASIER TO SPOT A PATTERN.
-            plt.scatter(xAxis, pred[0:300],marker=".", label="ml prediction", color='red')
-            plt.scatter(xAxis, y_test.float()[0:300],marker=".", label="y_test", color='black')
-            plt.xlabel('Time To Maturity')
-            plt.ylabel('Option Price')
-            plt.legend()
-            plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + "vsMaturity" + '.png')
-            plt.clf()
+            criterion = nn.MSELoss()
 
-            
-            plt.scatter(y_test.float()[0:300], pred[0:300],marker=".")
-            plt.xlabel('Test Option Price')
-            plt.ylabel('Predicted Option Price')
-            plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + "testvsprediction" + '.png')
+            # use LBFGS as optimizer since we can load the whole data to train
+            # lr = learning rate
+            # Will need to test different learning rates and optimizers
+            optimizer = optim.LBFGS(runningModel.parameters(), lr=learningRate)
+
+            # train model
+            if trainOrTestMode == 0 or trainOrTestMode == 2:
+                trainModel(runningModel, optimizer, criterion, X_train, y_train, 20)
+                torch.save(runningModel.state_dict(), model + '.ckpt')
+
+            # test model and get output
+            if trainOrTestMode == 1 or trainOrTestMode == 2:
+                pred = testModel(runningModel, criterion, X_test, y_test)
+
+                # Then results need to be saved somewhere so i can compare all models
+                now = datetime.now()
+                
+                # Save plots to an output dir, title model name and date/time ran
+                if not os.path.exists('model_output'):
+                    os.makedirs('model_output')
+                if not os.path.exists('model_output/' + model):
+                    os.makedirs('model_output/' + model)
+                if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
+                    os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
+                
+                xAxis = []
+                for n in range(len(pred)):
+                    xAxis.append(X_test[n][1])
+
+                plt.scatter(xAxis, pred[0:len(pred)],marker=".", label="ml prediction", color='red')
+                plt.scatter(xAxis, y_test.float()[0:len(pred)],marker=".", label="y_test", color='black')
+                plt.xlabel('Time To Maturity')
+                plt.ylabel('Option Price')
+                plt.legend()
+                plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + learningRate + "|" + numNeurons + " vsMaturity" + '.png')
+                plt.clf()
+
+                
+                plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
+                plt.xlabel('Test Option Price')
+                plt.ylabel('Predicted Option Price')
+                plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + learningRate + "|" + numNeurons + " testvsprediction" + '.png')
             
 def preRun():
     # get params
@@ -185,7 +170,10 @@ def preRun():
         return
 
     models = [
-        "simpleblackscholes"
+        "simpleblackscholes",
+        "simpleblackscholes2layer",
+        "simpleblackscholes3layer",
+        "simpleblackscholes4layer"
     ]
     
     dataSetPath = 'output/demo_file.csv'
@@ -194,6 +182,14 @@ def preRun():
         print('invalid dataset path')
         return
     
-    main(mode, models, dataSet)
+    # hyperparamatertesting config.
+    lr = [0.01, 0.1, 0.3, 0.5, 0.8]
+    hiddenLayer = [10, 20, 50]
+    hyperparam_config = list()
+    for rate in lr:
+        for neuronCount in hiddenLayer:
+            hyperparam_config.append([rate, neuronCount])
+
+    main(mode, models, dataSet, hyperparam_config)
 
 preRun()
