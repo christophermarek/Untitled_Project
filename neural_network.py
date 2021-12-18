@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime
 import os
 # local file
-import models
+import models as mlModelsClass
 
 
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
@@ -95,26 +95,30 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
     np.random.seed(0)
     torch.manual_seed(0)
     
+    # Add note how relu makes models predict 0, especially with more layers. This is probably because the relu forces it to 0.
+    
     X_train, X_test, y_train, y_test = dataSet
     
     for model in models:
         for hyperParamConfigEntry in hyperparam_config:
             learningRate = hyperParamConfigEntry[0]
             numNeurons = hyperParamConfigEntry[1]
+
+            print('running model: ' + model + " with config: " + str(learningRate) + " | " + str(numNeurons)) 
             
             # build the model
             runningModel = False
-            if model == 'simpleblackscholes': runningModel = models.BlackScholesModel_Simple(numNeurons)
-            if model == 'simpleblackscholes2layer': runningModel = models.BlackScholesModel_Simple2Layer(numNeurons)
-            if model == 'simpleblackscholes3layer': runningModel = models.BlackScholesModel_Simple3Layer(numNeurons)
-            if model == 'simpleblackscholes4layer': runningModel = models.BlackScholesModel_Simple4Layer(numNeurons)
+            if model == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
+            elif model == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
+            elif model == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
+            elif model == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
             
             if not model: 
                 print('invalid model name passed')
                 return
 
             if(trainOrTestMode == 1):
-                runningModel.load_state_dict(torch.load(model + '.ckpt'))
+                runningModel.load_state_dict(torch.load("models/" + model + "," + str(learningRate) + str(numNeurons) + '.ckpt'))
 
             criterion = nn.MSELoss()
 
@@ -125,13 +129,15 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
 
             # train model
             if trainOrTestMode == 0 or trainOrTestMode == 2:
-                trainModel(runningModel, optimizer, criterion, X_train, y_train, 20)
-                torch.save(runningModel.state_dict(), model + '.ckpt')
+                trainModel(runningModel, optimizer, criterion, X_train, y_train, 1)
+                if not os.path.exists('models'):
+                    os.makedirs('models')
+                torch.save(runningModel.state_dict(), "models/" + model + "," + str(learningRate) + str(numNeurons) + '.ckpt')
 
             # test model and get output
             if trainOrTestMode == 1 or trainOrTestMode == 2:
                 pred = testModel(runningModel, criterion, X_test, y_test)
-
+                
                 # Then results need to be saved somewhere so i can compare all models
                 now = datetime.now()
                 
@@ -146,20 +152,25 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 xAxis = []
                 for n in range(len(pred)):
                     xAxis.append(X_test[n][1])
+                    
+                # figure out this straight line issue, its because of the batching i think.
+                # AM i mutatating data instead of copying it I am not sure.
+                # just lower epochs so I can test it way quicker
+                # and then do them individually
 
-                plt.scatter(xAxis, pred[0:len(pred)],marker=".", label="ml prediction", color='red')
-                plt.scatter(xAxis, y_test.float()[0:len(pred)],marker=".", label="y_test", color='black')
-                plt.xlabel('Time To Maturity')
-                plt.ylabel('Option Price')
-                plt.legend()
-                plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + learningRate + "|" + numNeurons + " vsMaturity" + '.png')
+                # plt.clf()
+                # plt.scatter(xAxis, pred[0:len(pred)],marker=".", label="ml prediction", color='red')
+                # plt.scatter(xAxis, y_test.float()[0:len(pred)],marker=".", label="y_test", color='black')
+                # plt.xlabel('Time To Maturity')
+                # plt.ylabel('Option Price')
+                # plt.legend()
+                # plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," + str(numNeurons) + "vsMaturity" + '.png')
                 plt.clf()
-
-                
                 plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
                 plt.xlabel('Test Option Price')
                 plt.ylabel('Predicted Option Price')
-                plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + learningRate + "|" + numNeurons + " testvsprediction" + '.png')
+                plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
+                plt.clf()
             
 def preRun():
     # get params
@@ -183,8 +194,9 @@ def preRun():
         return
     
     # hyperparamatertesting config.
-    lr = [0.01, 0.1, 0.3, 0.5, 0.8]
-    hiddenLayer = [10, 20, 50]
+    # lr = [0.01, 0.1, 0.3, 0.5, 0.8]
+    lr = [0.1]
+    hiddenLayer = [10]
     hyperparam_config = list()
     for rate in lr:
         for neuronCount in hiddenLayer:
