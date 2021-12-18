@@ -12,7 +12,7 @@ from datetime import datetime, date
 import numpy as np
 import pandas as pd
 # import pandas_datareader.data as web
-import bs_calc
+# import bs_calc
 
 import data_generator
 
@@ -95,7 +95,7 @@ def main():
     #The link below shows where to get the real world data
     #https://medium.com/swlh/calculating-option-premiums-using-the-black-scholes-model-in-python-e9ed227afbee
 
-main()
+# main()
 
 def generateData():
     dataGenerator = data_generator.DataGenerator()
@@ -115,4 +115,4 @@ def generateData():
     print(df.head()) 
 
 
-# generateData()
+generateData()

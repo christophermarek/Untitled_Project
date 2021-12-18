@@ -16,6 +16,9 @@ import models as mlModelsClass
 
 # 6 outputs for 1 greek but thats later.
 
+# ADD to readme explanation of each file and directory
+# 
+
 def loadData(fileDir):
 
     # load data and make training set
@@ -29,11 +32,7 @@ def loadData(fileDir):
         print('error opening file')
         return False
 
-    # Sort by time to maturity so model has sense of time?
-    # THis actually improves performance substantially, note this in description
-    # In description of execution, write a notes section and make this a point
-    # - As seen in the literature review, keeping a time ordering is important for the ML
-    # algoruthm to get a sense of time ordering.
+    # Sort by time to maturity so model has sense of time
     df = df.sort_values(by=['timetomaturity'], ascending=True)
 
     X = df.drop(columns="BS-Call")
@@ -58,7 +57,7 @@ def loadData(fileDir):
 def trainModel(model, optimizer, lossFN, input, output, numEpochs):
     model.train()
     # begin to train
-    for i in range(numEpochs):
+    for i in range(15):
         print('STEP: ', i)
         def closure():
             optimizer.zero_grad()
@@ -96,6 +95,8 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
     torch.manual_seed(0)
     
     # Add note how relu makes models predict 0, especially with more layers. This is probably because the relu forces it to 0.
+    
+    # ADD a way to load multiple datasets
     
     X_train, X_test, y_train, y_test = dataSet
     

@@ -60,7 +60,6 @@ class DataGenerator():
             genDividends = round(random.uniform(self.dividend_rate[0], self.dividend_rate[1]), 2)
             genInterest = round(random.uniform(self.annualized_interest_rate[0], self.annualized_interest_rate[1]), 2)
             genVolatility = round(random.uniform(self.volatility[0], self.volatility[1]), 2)
-
             # Assume stock price is 1 when reversing moneyness ratio, then everything is based on contract price
             underlyingPrice = 1.0
             strike = underlyingPrice / genMoneyness
