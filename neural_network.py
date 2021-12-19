@@ -117,6 +117,7 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 elif model == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
                 elif model == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
             else:
+                print(model)
                 modelSplit = model.split(',')
                 model_name = modelSplit[0]
                 restOfModel = ''.join(modelSplit[1:])
@@ -154,19 +155,19 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 pred, error = testModel(runningModel, criterion, X_test, y_test)
                 models_error.append([model,error])
                 # Then results need to be saved somewhere so i can compare all models
-                now = datetime.now()
+                # now = datetime.now()
                 
-                # Save plots to an output dir, title model name and date/time ran
-                if not os.path.exists('model_output'):
-                    os.makedirs('model_output')
-                if not os.path.exists('model_output/' + model):
-                    os.makedirs('model_output/' + model)
-                if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
-                    os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
+                # # Save plots to an output dir, title model name and date/time ran
+                # if not os.path.exists('model_output'):
+                #     os.makedirs('model_output')
+                # if not os.path.exists('model_output/' + model):
+                #     os.makedirs('model_output/' + model)
+                # if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
+                #     os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
                 
-                xAxis = []
-                for n in range(len(pred)):
-                    xAxis.append(X_test[n][1])
+                # xAxis = []
+                # for n in range(len(pred)):
+                #     xAxis.append(X_test[n][1])
                     
                 # figure out this straight line issue, its because of the batching i think.
                 # AM i mutatating data instead of copying it I am not sure.
@@ -180,30 +181,27 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 # plt.ylabel('Option Price')
                 # plt.legend()
                 # plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," + str(numNeurons) + "vsMaturity" + '.png')
-                plt.clf()
-                plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
-                plt.xlabel('Test Option Price')
-                plt.ylabel('Predicted Option Price')
-                plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
-                plt.clf()
+                # plt.clf()
+                # plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
+                # plt.xlabel('Test Option Price')
+                # plt.ylabel('Predicted Option Price')
+                # plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
+                # plt.clf()
               
-
     # Then sort lowest to highest and display
-    listOfModelsErrors = models_error.sort(key = lambda x: x[1])
-    print(listOfModelsErrors)
+    models_error.sort(key = lambda x: x[1])
                 
     # write to file list of models and their mse
     f = open("model_output/modelMse.csv", "w")
     f.write("model,mse\n")
-    for model in listOfModelsErrors:
-        f.write(model[0] + "," + model[1] + "\n")
+    for i in range(len(models_error)):
+        f.write(models_error[i][0] + "," + str(models_error[i][1]) + "\n")
     f.close()
     # show model with lowest mse
-    print(listOfModelsErrors[0])
     
     # write to a separate file model with the lowest mse
     f = open("model_output/lowesterrormodel.", "w")
-    f.write(listOfModelsErrors[0])
+    f.write(models_error[0][0] + "," + str(models_error[0][1]))
     f.close()           
        
             
@@ -245,9 +243,6 @@ def preRun():
     
     # hyperparamatertesting config.
     # lr = [0.01, 0.1, 0.3, 0.5, 0.8]
-    
-            
-    
     main(mode, models, dataSet, hyperparam_config)
 
 preRun()
