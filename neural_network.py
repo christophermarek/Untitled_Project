@@ -74,7 +74,7 @@ def testModel(model, lossFN, testInput, testOutput):
         pred = model(testInput.float())
     cost = lossFN(pred, testOutput.float())
     print("mean squared error:", cost.item())
-    return pred
+    return [pred, cost.item()]
 
 def main(trainOrTestMode, models, dataSet, hyperparam_config):
     # The "forward pass" refers to calculation process, values of the output layers from the inputs data. It's traversing through all neurons from first to last layer.
@@ -100,6 +100,8 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
     
     X_train, X_test, y_train, y_test = dataSet
     
+    models_error = list()
+    
     for model in models:
         for hyperParamConfigEntry in hyperparam_config:
             learningRate = hyperParamConfigEntry[0]
@@ -109,17 +111,29 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
             
             # build the model
             runningModel = False
-            if model == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
-            elif model == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
-            elif model == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
-            elif model == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
-            
+            if not trainOrTestMode == 1:
+                if model == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
+                elif model == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
+                elif model == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
+                elif model == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
+            else:
+                modelSplit = model.split(',')
+                model_name = modelSplit[0]
+                restOfModel = ''.join(modelSplit[1:])
+                restOfModelSplit = restOfModel.split('.')
+                numNeurons = int(restOfModelSplit[1][-2:])
+                learningRate = restOfModelSplit[1][:-2]
+                learningRate = float('0.' + learningRate)
+                if model_name == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
+                elif model_name == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
+                elif model_name == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
+                elif model_name == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
+                
             if not model: 
                 print('invalid model name passed')
                 return
-
             if(trainOrTestMode == 1):
-                runningModel.load_state_dict(torch.load("models/" + model + "," + str(learningRate) + str(numNeurons) + '.ckpt'))
+                runningModel.load_state_dict(torch.load("models/" + model))
 
             criterion = nn.MSELoss()
 
@@ -137,8 +151,8 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
 
             # test model and get output
             if trainOrTestMode == 1 or trainOrTestMode == 2:
-                pred = testModel(runningModel, criterion, X_test, y_test)
-                
+                pred, error = testModel(runningModel, criterion, X_test, y_test)
+                models_error.append([model,error])
                 # Then results need to be saved somewhere so i can compare all models
                 now = datetime.now()
                 
@@ -172,6 +186,26 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 plt.ylabel('Predicted Option Price')
                 plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
                 plt.clf()
+              
+
+    # Then sort lowest to highest and display
+    listOfModelsErrors = models_error.sort(key = lambda x: x[1])
+    print(listOfModelsErrors)
+                
+    # write to file list of models and their mse
+    f = open("model_output/modelMse.csv", "w")
+    f.write("model,mse\n")
+    for model in listOfModelsErrors:
+        f.write(model[0] + "," + model[1] + "\n")
+    f.close()
+    # show model with lowest mse
+    print(listOfModelsErrors[0])
+    
+    # write to a separate file model with the lowest mse
+    f = open("model_output/lowesterrormodel.", "w")
+    f.write(listOfModelsErrors[0])
+    f.close()           
+       
             
 def preRun():
     # get params
@@ -180,14 +214,29 @@ def preRun():
     if not (mode in [0,1,2]):
         print('invalid mode paramaters')
         return
-
-    models = [
-        "simpleblackscholes",
-        "simpleblackscholes2layer",
-        "simpleblackscholes3layer",
-        "simpleblackscholes4layer"
-    ]
     
+    if not mode == 1:
+
+        models = [
+            "simpleblackscholes",
+            "simpleblackscholes2layer",
+            "simpleblackscholes3layer",
+            "simpleblackscholes4layer"
+        ]
+        
+        lr = [0.1]
+        hiddenLayer = [10]
+        hyperparam_config = list()
+        for rate in lr:
+            for neuronCount in hiddenLayer:
+                hyperparam_config.append([rate, neuronCount])
+    else:
+        modelsDir = os.listdir('models')
+        # print(modelsDir)
+        models = modelsDir
+        # will never be ran with this config but it means 1 iteration per model
+        hyperparam_config = [[0.1, 10]]
+        
     dataSetPath = 'output/demo_file.csv'
     dataSet = loadData(dataSetPath)
     if not dataSet: 
@@ -196,13 +245,9 @@ def preRun():
     
     # hyperparamatertesting config.
     # lr = [0.01, 0.1, 0.3, 0.5, 0.8]
-    lr = [0.1]
-    hiddenLayer = [10]
-    hyperparam_config = list()
-    for rate in lr:
-        for neuronCount in hiddenLayer:
-            hyperparam_config.append([rate, neuronCount])
-
+    
+            
+    
     main(mode, models, dataSet, hyperparam_config)
 
 preRun()

@@ -9,7 +9,7 @@ def configureOutput():
         
     for model in models:
         imageDirs = os.listdir(rootDir + '/' + model)
-        # print(imageDirs)
+            
         imageArray = list()
         pathToImage = rootDir + '/' + model + '/'
         if len(imageDirs) == 15:
@@ -19,8 +19,8 @@ def configureOutput():
             # Now each model has an image array so now we plot for this model
             fig, axs = plt.subplots(5, 3)
             fig.suptitle(model, fontsize=16)
-            fig.supxlabel('Hidden Layer Neuron Count [10, 25, 50]')
-            fig.supylabel('Learning Rates [0.01, 0.1, 0.3, 0.5, 0.8]. 0.01 is top row ascending order going down the table')
+            # fig.supxlabel('Hidden Layer Neuron Count [10, 25, 50]')
+            # fig.supylabel('Learning Rates [0.01, 0.1, 0.3, 0.5, 0.8]')
 
             for n in range(len(imageArray)):
                 axs[n][0].imshow(imageArray[n][0], aspect='auto')
@@ -31,8 +31,7 @@ def configureOutput():
                 axs[n][2].axis('off')
                 
             fig.subplots_adjust(top=0.88)
-            # plt.show()
-            plt.savefig(model + '_combinedimages.png')
+            plt.savefig(model + '_combinedimages.pdf', dpi=1200)
             
     
 configureOutput()
