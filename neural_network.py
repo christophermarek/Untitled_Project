@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 # local file
 import models as mlModelsClass
+import data_generator
 
 
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
@@ -17,7 +18,7 @@ import models as mlModelsClass
 # 6 outputs for 1 greek but thats later.
 
 # ADD to readme explanation of each file and directory
-# 
+
 
 def loadData(fileDir):
 
@@ -34,7 +35,8 @@ def loadData(fileDir):
 
     # Sort by time to maturity so model has sense of time
     df = df.sort_values(by=['timetomaturity'], ascending=True)
-
+    print(df.head())
+    
     X = df.drop(columns="BS-Call")
     y = df['BS-Call']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
@@ -155,19 +157,19 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 pred, error = testModel(runningModel, criterion, X_test, y_test)
                 models_error.append([model,error])
                 # Then results need to be saved somewhere so i can compare all models
-                # now = datetime.now()
+                now = datetime.now()
                 
                 # # Save plots to an output dir, title model name and date/time ran
-                # if not os.path.exists('model_output'):
-                #     os.makedirs('model_output')
-                # if not os.path.exists('model_output/' + model):
-                #     os.makedirs('model_output/' + model)
-                # if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
-                #     os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
+                if not os.path.exists('model_output'):
+                    os.makedirs('model_output')
+                if not os.path.exists('model_output/' + model):
+                    os.makedirs('model_output/' + model)
+                if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
+                    os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
                 
-                # xAxis = []
-                # for n in range(len(pred)):
-                #     xAxis.append(X_test[n][1])
+                xAxis = []
+                for n in range(len(pred)):
+                    xAxis.append(X_test[n][1])
                     
                 # figure out this straight line issue, its because of the batching i think.
                 # AM i mutatating data instead of copying it I am not sure.
@@ -181,12 +183,12 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 # plt.ylabel('Option Price')
                 # plt.legend()
                 # plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," + str(numNeurons) + "vsMaturity" + '.png')
-                # plt.clf()
-                # plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
-                # plt.xlabel('Test Option Price')
-                # plt.ylabel('Predicted Option Price')
-                # plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
-                # plt.clf()
+                plt.clf()
+                plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
+                plt.xlabel('Test Option Price')
+                plt.ylabel('Predicted Option Price')
+                plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
+                plt.clf()
               
     # Then sort lowest to highest and display
     models_error.sort(key = lambda x: x[1])
@@ -207,35 +209,50 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
             
 def preRun():
     # get params
-    mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
-    mode = int(mode)
-    if not (mode in [0,1,2]):
-        print('invalid mode paramaters')
-        return
+    # mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
+    # mode = int(mode)
+    # if not (mode in [0,1,2]):
+    #     print('invalid mode paramaters')
+    #     return
     
-    if not mode == 1:
+    # if not mode == 1:
+    #     models = [
+    #         "simpleblackscholes",
+    #         "simpleblackscholes2layer",
+    #         "simpleblackscholes3layer",
+    #         "simpleblackscholes4layer"
+    #     ]
+        
+    #     lr = [0.1]
+    #     hiddenLayer = [10]
+    #     hyperparam_config = list()
+    #     for rate in lr:
+    #         for neuronCount in hiddenLayer:
+    #             hyperparam_config.append([rate, neuronCount])
+                
+    # else:
+    #     modelsDir = os.listdir('models')
+    #     # print(modelsDir)
+    #     models = modelsDir
+    #     # will never be ran with this config but it means 1 iteration per model
+    #     hyperparam_config = [[0.1, 10]]
+    
+    generatingData = True    
+    dataset_title = 'blackscholesprices_and_greeks'
+    if generatingData:
+        dataGenerator = data_generator.DataGenerator(dataset_title)
+        
+        output = dataGenerator.generateDataSet(5000000)
+        # Class supports additional outputs with changing input ranges to generate multiple datasets
+        
+        print(output[1])
+        if not output[0]:
+            return
 
-        models = [
-            "simpleblackscholes",
-            "simpleblackscholes2layer",
-            "simpleblackscholes3layer",
-            "simpleblackscholes4layer"
-        ]
+        print("\n")
+
         
-        lr = [0.1]
-        hiddenLayer = [10]
-        hyperparam_config = list()
-        for rate in lr:
-            for neuronCount in hiddenLayer:
-                hyperparam_config.append([rate, neuronCount])
-    else:
-        modelsDir = os.listdir('models')
-        # print(modelsDir)
-        models = modelsDir
-        # will never be ran with this config but it means 1 iteration per model
-        hyperparam_config = [[0.1, 10]]
-        
-    dataSetPath = 'output/demo_file.csv'
+    dataSetPath = 'generated_datasets/' + dataset_title + '.csv'
     dataSet = loadData(dataSetPath)
     if not dataSet: 
         print('invalid dataset path')
@@ -243,6 +260,6 @@ def preRun():
     
     # hyperparamatertesting config.
     # lr = [0.01, 0.1, 0.3, 0.5, 0.8]
-    main(mode, models, dataSet, hyperparam_config)
+    # main(mode, models, dataSet, hyperparam_config)
 
 preRun()
