@@ -237,7 +237,7 @@ def preRun():
     #     # will never be ran with this config but it means 1 iteration per model
     #     hyperparam_config = [[0.1, 10]]
     
-    generatingData = True    
+    generatingData = 0    
     dataset_title = 'blackscholesprices_and_greeks'
     if generatingData:
         dataGenerator = data_generator.DataGenerator(dataset_title)
