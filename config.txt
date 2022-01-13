@@ -12,10 +12,12 @@ instruction types:
 
 
 GENERATEDATASET
-
+DATASETPATH w/o .csv extension added
+number of lines in DATASET
 END
 
 TRAIN
+DATASETPATH
 BASE MODEL NAME (classname to load from models.py)
 MODEL INIT PARAMATERS 
 LR
@@ -27,6 +29,10 @@ MODEL INIT PARAMATERS
 LR
 END
 
-
-
 !
+
+
+GENERATEDATASET
+TEST_DATASET_GENERATION
+100
+END

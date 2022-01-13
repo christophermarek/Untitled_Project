@@ -11,7 +11,6 @@ import os
 
 # local files
 import models as mlModelsClass
-import data_generator
 
 
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
@@ -245,11 +244,6 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
        
             
 def preRun():
-    
-    
-    # INSTEAD OF doing it this way 
-    
-    
     # get params
     mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
     mode = int(mode)
@@ -284,21 +278,6 @@ def preRun():
                 models.append(model)
         # will never be ran with this config but it means 1 iteration per model
         hyperparam_config = [[0.1, 10]]
-    
-    generatingData = 0
-    dataset_title = 'blackscholesprices_and_greeks'
-    if generatingData:
-        dataGenerator = data_generator.DataGenerator(dataset_title)
-        
-        output = dataGenerator.generateDataSet(3000000)
-        # Class supports additional outputs with changing input ranges to generate multiple datasets
-        
-        print(output[1])
-        if not output[0]:
-            return
-
-        print("\n")
-
         
     dataSetPath = 'generated_datasets/' + dataset_title + '.csv'
     dataSet = loadData(dataSetPath)
