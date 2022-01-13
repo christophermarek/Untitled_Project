@@ -36,7 +36,6 @@ class BlackScholesModel_Simple2Layer(nn.Module):
         x = self.model(input)
         return x
 
-
 class BlackScholesModel_Simple3Layer(nn.Module):
 
     def __init__(self, numHiddenNeurons):
@@ -57,7 +56,6 @@ class BlackScholesModel_Simple3Layer(nn.Module):
     def forward(self, input):
         x = self.model(input)
         return x
-
 
 class BlackScholesModel_Simple4Layer(nn.Module):
 
@@ -84,9 +82,9 @@ class BlackScholesModel_Simple4Layer(nn.Module):
 
 class BlackScholesModel_Simple_Greeks(nn.Module):
     
-    def __init__(self, numHiddenNeurons):
+    def __init__(self):
         input_size = 5
-        hidden_sizes = [numHiddenNeurons, numHiddenNeurons]
+        hidden_sizes = [10, 10]
         output_size = 6
         super(BlackScholesModel_Simple_Greeks, self).__init__()
         self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),

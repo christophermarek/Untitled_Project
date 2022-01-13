@@ -1,6 +1,14 @@
 
+from torch import nn, optim
+import os
+import torch
+
 #local imports
 import data_generator
+import models as mlModelsClass
+
+from neural_network import loadData, trainModel
+
 
 def instruction_generate_dataset(input):
     print('INSTRUCTION: Generate Dataset')
@@ -17,6 +25,50 @@ def instruction_generate_dataset(input):
     
     print('INSTRUCTION COMPLETE: Generate Dataset \n')
 
+
+def instruction_train_model(input):
+    print('INSTRUCTION Train Model')    
+    
+    dataset_path = input[0]
+    model_name = input[1]
+    model_init_params = input[2]
+    learning_rate = float(input[3])
+    num_epochs = int(input[4])
+    
+    # not a config entry yet
+    criterion = nn.MSELoss()
+    
+    # load data into training set, maybe move into main?
+    dataSet = loadData(dataset_path)
+    if not dataSet: 
+        print('invalid dataset path')
+        return
+    
+    X_train = dataSet[0]
+    y_train = dataSet[2]
+    
+    runningModel = False
+    if model_name == 'BlackScholesModel_Simple_Greeks': 
+        runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks()
+        
+    if not runningModel:
+        print('INSTRUCTION FAILED: Train Model')
+        return 
+    
+    # use LBFGS as optimizer since we can load the whole data to train
+    # lr = learning rate
+    # Will need to test different learning rates and optimizers
+    optimizer = optim.LBFGS(runningModel.parameters(), lr=learning_rate)
+
+    # train model
+    trainModel(runningModel, optimizer, criterion, X_train, y_train, num_epochs)
+    if not os.path.exists('models'):
+        os.makedirs('models')
+    # will overwrite existing trained model
+    # can leave this code in the train model in nn to remove imports from this file
+    torch.save(runningModel.state_dict(), "models/" + 'model_name'  + '.ckpt')
+    
+    print('INSTRUCTION Complete: Train Model \n')    
     
     
 def main():
@@ -52,6 +104,11 @@ def main():
                     if line.strip() == 'GENERATEDATASET':
                         processFunction = instruction_generate_dataset
                         inInstruction = True
+                    if line.strip() == 'TRAIN':
+                        processFunction = instruction_train_model
+                        inInstruction = True
+
+                    
                 else:
                     if line.strip() == 'END':
                         processFunction(capturedLines)
@@ -61,7 +118,6 @@ def main():
                     else:
                         capturedLines.append(line.strip())
                     
-        
     print("Completed Going Through Config \n")
     
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+# Definetly dont use all these imports anymore
 import sys
 import numpy as np
 import torch
@@ -9,9 +10,6 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime
 import os
 
-# local files
-import models as mlModelsClass
-
 
 # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
 # It contains code too I didnt realize this before, shows how they generate their data exactly
@@ -22,8 +20,10 @@ import models as mlModelsClass
 
 # REMOVE TIMESTAMPS ON SAVED FILES IT JUST ADDS CLUTTER
 
+# load data into train set
 def loadData(fileDir):
-
+    fileDir = 'generated_datasets/' + fileDir + '.csv'
+    
     # load data and make training set
     # Get dataset
     filePath = fileDir
@@ -37,7 +37,8 @@ def loadData(fileDir):
 
     # Sort by time to maturity so model has sense of time NOTE: important for meaningful predictions
     df = df.sort_values(by=['timetomaturity'], ascending=True)
-    print(df.head())
+    # print('PRINTING FIRST 5 ROWS OF DATASET')
+    # print(df.head())
     
     # price not used for greeks, but it is actually.
     df = df.drop(columns="BS-Call")
@@ -64,8 +65,8 @@ def loadData(fileDir):
 def trainModel(model, optimizer, lossFN, input, output, numEpochs):
     model.train()
     # begin to train
-    for i in range(15):
-        print('STEP: ', i)
+    for i in range(numEpochs):
+        print('Epoch: ', i)
         def closure():
             optimizer.zero_grad()
             out = model(input.float())
@@ -114,30 +115,22 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
             learningRate = hyperParamConfigEntry[0]
             numNeurons = hyperParamConfigEntry[1]
 
-            print('running model: ' + model + " with config: " + str(learningRate) + " | " + str(numNeurons)) 
-            
             # build the model
             runningModel = False
-            if not trainOrTestMode == 1:
-                if model == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
-                elif model == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
-                elif model == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
-                elif model == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
-                elif model == 'simpleblackscholesgreeks': runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks(numNeurons)
-            else:
-                print(model)
-                modelSplit = model.split(',')
-                model_name = modelSplit[0]
-                restOfModel = ''.join(modelSplit[1:])
-                restOfModelSplit = restOfModel.split('.')
-                numNeurons = int(restOfModelSplit[1][-2:])
-                learningRate = restOfModelSplit[1][:-2]
-                learningRate = float('0.' + learningRate)
-                if model_name == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
-                elif model_name == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
-                elif model_name == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
-                elif model_name == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
-                elif model_name == 'simpleblackscholesgreeks': runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks(numNeurons)
+            # else:
+            #     print(model)
+            #     modelSplit = model.split(',')
+            #     model_name = modelSplit[0]
+            #     restOfModel = ''.join(modelSplit[1:])
+            #     restOfModelSplit = restOfModel.split('.')
+            #     numNeurons = int(restOfModelSplit[1][-2:])
+            #     learningRate = restOfModelSplit[1][:-2]
+            #     learningRate = float('0.' + learningRate)
+            #     if model_name == 'simpleblackscholes': runningModel = mlModelsClass.BlackScholesModel_Simple(numNeurons)
+            #     elif model_name == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
+            #     elif model_name == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
+            #     elif model_name == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
+            #     elif model_name == 'simpleblackscholesgreeks': runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks(numNeurons)
                 
             if not model: 
                 print('invalid model name passed')
@@ -145,22 +138,12 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
             if(trainOrTestMode == 1):
                 runningModel.load_state_dict(torch.load("models/" + model))
 
-            criterion = nn.MSELoss()
 
-            # use LBFGS as optimizer since we can load the whole data to train
-            # lr = learning rate
-            # Will need to test different learning rates and optimizers
-            optimizer = optim.LBFGS(runningModel.parameters(), lr=learningRate)
 
-            # train model
-            if trainOrTestMode == 0 or trainOrTestMode == 2:
-                trainModel(runningModel, optimizer, criterion, X_train, y_train, 1)
-                if not os.path.exists('models'):
-                    os.makedirs('models')
-                torch.save(runningModel.state_dict(), "models/" + model + "," + str(learningRate) + str(numNeurons) + '.ckpt')
 
             # test model and get output
             if trainOrTestMode == 1 or trainOrTestMode == 2:
+                criterion = nn.MSELoss()
                 pred, error = testModel(runningModel, criterion, X_test, y_test)
                 models_error.append([model,error])
                 # Then results need to be saved somewhere so i can compare all models
@@ -242,51 +225,6 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
     f.write(models_error[0][0] + "," + str(models_error[0][1]))
     f.close()           
        
+       
+       
             
-def preRun():
-    # get params
-    mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
-    mode = int(mode)
-    if not (mode in [0,1,2]):
-        print('invalid mode paramaters')
-        return
-    
-    if not mode == 1:
-        models = [
-            # "simpleblackscholes",
-            # "simpleblackscholes2layer",
-            # "simpleblackscholes3layer",
-            # "simpleblackscholes4layer"
-            "simpleblackscholesgreeks"
-        ]
-        
-        lr = [0.1]
-        hiddenLayer = [10]
-        hyperparam_config = list()
-        for rate in lr:
-            for neuronCount in hiddenLayer:
-                hyperparam_config.append([rate, neuronCount])
-                
-    else:
-        modelsDir = os.listdir('models')
-        # print(modelsDir)
-        # only load the greeks one for now
-        # models = modelsDir[len(modelsDir) - 1]
-        models = list()
-        for model in modelsDir:
-            if model == 'simpleblackscholesgreeks,0.110.ckpt':
-                models.append(model)
-        # will never be ran with this config but it means 1 iteration per model
-        hyperparam_config = [[0.1, 10]]
-        
-    dataSetPath = 'generated_datasets/' + dataset_title + '.csv'
-    dataSet = loadData(dataSetPath)
-    if not dataSet: 
-        print('invalid dataset path')
-        return
-    
-    # hyperparamatertesting config.
-    # lr = [0.01, 0.1, 0.3, 0.5, 0.8]
-    main(mode, models, dataSet, hyperparam_config)
-
-preRun()
