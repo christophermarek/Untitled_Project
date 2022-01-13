@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -7,7 +8,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from datetime import datetime
 import os
-# local file
+
+# local files
 import models as mlModelsClass
 import data_generator
 
@@ -19,6 +21,7 @@ import data_generator
 
 # ADD to readme explanation of each file and directory
 
+# REMOVE TIMESTAMPS ON SAVED FILES IT JUST ADDS CLUTTER
 
 def loadData(fileDir):
 
@@ -33,12 +36,15 @@ def loadData(fileDir):
         print('error opening file')
         return False
 
-    # Sort by time to maturity so model has sense of time
+    # Sort by time to maturity so model has sense of time NOTE: important for meaningful predictions
     df = df.sort_values(by=['timetomaturity'], ascending=True)
     print(df.head())
     
-    X = df.drop(columns="BS-Call")
-    y = df['BS-Call']
+    # price not used for greeks, but it is actually.
+    df = df.drop(columns="BS-Call")
+    
+    X = df.drop(columns=['iv','delta', 'gamma', 'rho', 'theta', 'vega'])
+    y = df[['iv','delta', 'gamma', 'rho', 'theta', 'vega']]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     # convert to tensors
@@ -47,11 +53,11 @@ def loadData(fileDir):
     # Need to reshape y tensor so it has the same shape as X
     y_train = torch.tensor(y_train.values, dtype=torch.float64)
     y_test = torch.tensor(y_test.values, dtype=torch.float64)
-    new_shape_ytrain = (len(y_train), 1)
+    new_shape_ytrain = (len(y_train), 6)
     y_train = y_train.view(new_shape_ytrain)
-    new_shape_ytest = (len(y_test), 1)
+    new_shape_ytest = (len(y_test), 6)
     y_test = y_test.view(new_shape_ytest)
-
+    print('dataset loaded')
     return [X_train, X_test, y_train, y_test]
 
 
@@ -101,7 +107,7 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
     # ADD a way to load multiple datasets
     
     X_train, X_test, y_train, y_test = dataSet
-    
+    print('in main neural_networks now')
     models_error = list()
     
     for model in models:
@@ -118,6 +124,7 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 elif model == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
                 elif model == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
                 elif model == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
+                elif model == 'simpleblackscholesgreeks': runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks(numNeurons)
             else:
                 print(model)
                 modelSplit = model.split(',')
@@ -131,6 +138,7 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 elif model_name == 'simpleblackscholes2layer': runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(numNeurons)
                 elif model_name == 'simpleblackscholes3layer': runningModel = mlModelsClass.BlackScholesModel_Simple3Layer(numNeurons)
                 elif model_name == 'simpleblackscholes4layer': runningModel = mlModelsClass.BlackScholesModel_Simple4Layer(numNeurons)
+                elif model_name == 'simpleblackscholesgreeks': runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks(numNeurons)
                 
             if not model: 
                 print('invalid model name passed')
@@ -167,9 +175,9 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
                     os.makedirs('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S"))
                 
-                xAxis = []
-                for n in range(len(pred)):
-                    xAxis.append(X_test[n][1])
+                # xAxis = []
+                # for n in range(len(pred)):
+                #     xAxis.append(X_test[n][1])
                     
                 # figure out this straight line issue, its because of the batching i think.
                 # AM i mutatating data instead of copying it I am not sure.
@@ -184,10 +192,39 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
                 # plt.legend()
                 # plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," + str(numNeurons) + "vsMaturity" + '.png')
                 plt.clf()
-                plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
-                plt.xlabel('Test Option Price')
-                plt.ylabel('Predicted Option Price')
-                plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
+                # plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
+                # plt.xlabel('Test Option Price')
+                # plt.ylabel('Predicted Option Price')
+                # plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
+                print(pred)
+                predIv, predDelta, predGamma, predRho, predTheta, predVega, testIv, testDelta, testGamma, testRho, testTheta, testVega = list(), list(), list(), list(), list(), list(), list(), list(), list(), list(), list(), list()
+                for i in range(len(pred)):
+                    predIv = pred[i][0]
+                    testIv = y_test[i][0]
+                    predDelta = pred[i][1]
+                    testDelta = y_test[i][1]
+                    predGamma = pred[i][2]
+                    testGamma = y_test[i][2]
+                    predRho = pred[i][3]
+                    testRho = y_test[i][3]
+                    predTheta = pred[i][4]
+                    testTheta = y_test[i][4]
+                    predVega = pred[i][5]
+                    testVega = y_test[i][5]
+                
+                fig, axs = plt.subplots(2, 3)
+                    
+                axs[0][0].plot(testIv, predIv)
+                axs[0][1].plot(testDelta, predDelta)
+                axs[0][2].plot(testGamma, predGamma)
+                axs[1][0].plot(testRho, predRho)
+                axs[1][1].plot(testTheta, predTheta)
+                axs[1][2].plot(testVega, predVega)
+
+                plt.show()
+                
+                # doesnt work wtf, try plotting individual ones i guess?
+                
                 plt.clf()
               
     # Then sort lowest to highest and display
@@ -208,41 +245,52 @@ def main(trainOrTestMode, models, dataSet, hyperparam_config):
        
             
 def preRun():
+    
+    
+    # INSTEAD OF doing it this way 
+    
+    
     # get params
-    # mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
-    # mode = int(mode)
-    # if not (mode in [0,1,2]):
-    #     print('invalid mode paramaters')
-    #     return
+    mode = input("Enter 2 for train and test, 1 for test mode, 0 for train mode:  ")
+    mode = int(mode)
+    if not (mode in [0,1,2]):
+        print('invalid mode paramaters')
+        return
     
-    # if not mode == 1:
-    #     models = [
-    #         "simpleblackscholes",
-    #         "simpleblackscholes2layer",
-    #         "simpleblackscholes3layer",
-    #         "simpleblackscholes4layer"
-    #     ]
+    if not mode == 1:
+        models = [
+            # "simpleblackscholes",
+            # "simpleblackscholes2layer",
+            # "simpleblackscholes3layer",
+            # "simpleblackscholes4layer"
+            "simpleblackscholesgreeks"
+        ]
         
-    #     lr = [0.1]
-    #     hiddenLayer = [10]
-    #     hyperparam_config = list()
-    #     for rate in lr:
-    #         for neuronCount in hiddenLayer:
-    #             hyperparam_config.append([rate, neuronCount])
+        lr = [0.1]
+        hiddenLayer = [10]
+        hyperparam_config = list()
+        for rate in lr:
+            for neuronCount in hiddenLayer:
+                hyperparam_config.append([rate, neuronCount])
                 
-    # else:
-    #     modelsDir = os.listdir('models')
-    #     # print(modelsDir)
-    #     models = modelsDir
-    #     # will never be ran with this config but it means 1 iteration per model
-    #     hyperparam_config = [[0.1, 10]]
+    else:
+        modelsDir = os.listdir('models')
+        # print(modelsDir)
+        # only load the greeks one for now
+        # models = modelsDir[len(modelsDir) - 1]
+        models = list()
+        for model in modelsDir:
+            if model == 'simpleblackscholesgreeks,0.110.ckpt':
+                models.append(model)
+        # will never be ran with this config but it means 1 iteration per model
+        hyperparam_config = [[0.1, 10]]
     
-    generatingData = 0    
+    generatingData = 0
     dataset_title = 'blackscholesprices_and_greeks'
     if generatingData:
         dataGenerator = data_generator.DataGenerator(dataset_title)
         
-        output = dataGenerator.generateDataSet(5000000)
+        output = dataGenerator.generateDataSet(3000000)
         # Class supports additional outputs with changing input ranges to generate multiple datasets
         
         print(output[1])
@@ -260,6 +308,6 @@ def preRun():
     
     # hyperparamatertesting config.
     # lr = [0.01, 0.1, 0.3, 0.5, 0.8]
-    # main(mode, models, dataSet, hyperparam_config)
+    main(mode, models, dataSet, hyperparam_config)
 
 preRun()

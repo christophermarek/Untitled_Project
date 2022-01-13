@@ -1,0 +1,32 @@
+! 
+
+Program will ignore all text between ! and !
+
+Instruction format will be multiline
+
+instruction types:
+- GENERATEDATASET
+- TRAIN
+- TEST
+- COMBINEOUTPUTS 
+
+
+GENERATEDATASET
+
+END
+
+TRAIN
+BASE MODEL NAME (classname to load from models.py)
+MODEL INIT PARAMATERS 
+LR
+END
+
+TEST
+BASE MODEL NAME (classname to load from models.py)
+MODEL INIT PARAMATERS 
+LR
+END
+
+
+
+!

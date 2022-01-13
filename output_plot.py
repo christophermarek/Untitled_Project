@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
 
+# Simple script create a comparison image for the hyperparamaters of each model. Only works with a specific configuration.
+
 def configureOutput():
     rootDir = './model_output'
     models = os.listdir(rootDir)
