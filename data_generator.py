@@ -10,6 +10,9 @@ from py_vollib.black_scholes_merton.greeks.analytical import rho
 from py_vollib.black_scholes_merton.greeks.analytical import theta
 from py_vollib.black_scholes_merton.greeks.analytical import vega
 
+# https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
+# It contains code too I didnt realize this before, shows how they generate their data exactly
+
 class DataGenerator():
 
     def __init__(self, dataset_title):

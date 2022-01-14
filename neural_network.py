@@ -10,15 +10,18 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime
 import os
 
+# The "forward pass" refers to calculation process, values of the output layers from the inputs data. It's traversing through all neurons from first to last layer.
+# A loss function is calculated from the output values.
+# And then "backward pass" refers to process of counting changes in weights (de facto learning), using gradient descent algorithm (or similar). Computation is made from last layer, backward to the first layer.
 
-# https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
-# It contains code too I didnt realize this before, shows how they generate their data exactly
+# Backward and forward pass makes together one "iteration".
 
-# 6 outputs for 1 greek but thats later.
+# During one iteration, you usually pass a subset of the data set, which is called "mini-batch" or "batch"
+# (however, "batch" can also mean an entire set, hence the prefix "mini")
 
-# ADD to readme explanation of each file and directory
+# "Epoch" means passing the entire data set in batches.
+# One epoch contains (number_of_items / batch_size) iterations
 
-# REMOVE TIMESTAMPS ON SAVED FILES IT JUST ADDS CLUTTER
 
 # load data into train set
 def loadData(fileDir):
@@ -85,90 +88,3 @@ def testModel(model, lossFN, testInput, testOutput):
     cost = lossFN(pred, testOutput.float())
     print("mean squared error:", cost.item())
     return [pred, cost.item()]
-
-
-def main(trainOrTestMode, models, dataSet, hyperparam_config):
-    # The "forward pass" refers to calculation process, values of the output layers from the inputs data. It's traversing through all neurons from first to last layer.
-    # A loss function is calculated from the output values.
-    # And then "backward pass" refers to process of counting changes in weights (de facto learning), using gradient descent algorithm (or similar). Computation is made from last layer, backward to the first layer.
-
-    # Backward and forward pass makes together one "iteration".
-
-    # During one iteration, you usually pass a subset of the data set, which is called "mini-batch" or "batch"
-    # (however, "batch" can also mean an entire set, hence the prefix "mini")
-
-    # "Epoch" means passing the entire data set in batches.
-    # One epoch contains (number_of_items / batch_size) iterations
-
-    # set random seed to 0
-    # do this so results can be reproducable
-    np.random.seed(0)
-    torch.manual_seed(0)
-
-    for model in models:
-
-        models_error.append([model, error])
-        # Then results need to be saved somewhere so i can compare all models
-        now = datetime.now()
-
-        # # Save plots to an output dir, title model name and date/time ran
-        if not os.path.exists('model_output'):
-            os.makedirs('model_output')
-        if not os.path.exists('model_output/' + model):
-            os.makedirs('model_output/' + model)
-        if not os.path.exists('model_output/' + model + '/' + now.strftime("%d_%m_%Y_%H_%M_%S")):
-            os.makedirs('model_output/' + model + '/' +
-                        now.strftime("%d_%m_%Y_%H_%M_%S"))
-
-        # xAxis = []
-        # for n in range(len(pred)):
-        #     xAxis.append(X_test[n][1])
-
-        # figure out this straight line issue, its because of the batching i think.
-        # AM i mutatating data instead of copying it I am not sure.
-        # just lower epochs so I can test it way quicker
-        # and then do them individually
-
-        # plt.clf()
-        # plt.scatter(xAxis, pred[0:len(pred)],marker=".", label="ml prediction", color='red')
-        # plt.scatter(xAxis, y_test.float()[0:len(pred)],marker=".", label="y_test", color='black')
-        # plt.xlabel('Time To Maturity')
-        # plt.ylabel('Option Price')
-        # plt.legend()
-        # plt.savefig('model_output/' + model + "/" + now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," + str(numNeurons) + "vsMaturity" + '.png')
-        plt.clf()
-        # plt.scatter(y_test.float()[0:len(pred)], pred[0:len(pred)],marker=".")
-        # plt.xlabel('Test Option Price')
-        # plt.ylabel('Predicted Option Price')
-        # plt.savefig('model_output/' + model + "/" +  now.strftime("%d_%m_%Y_%H_%M_%S") + "/" + str(learningRate) + "," +str(numNeurons) + "testvsprediction" + '.png')
-        print(pred)
-        predIv, predDelta, predGamma, predRho, predTheta, predVega, testIv, testDelta, testGamma, testRho, testTheta, testVega = list(
-        ), list(), list(), list(), list(), list(), list(), list(), list(), list(), list(), list()
-        for i in range(len(pred)):
-            predIv = pred[i][0]
-            testIv = y_test[i][0]
-            predDelta = pred[i][1]
-            testDelta = y_test[i][1]
-            predGamma = pred[i][2]
-            testGamma = y_test[i][2]
-            predRho = pred[i][3]
-            testRho = y_test[i][3]
-            predTheta = pred[i][4]
-            testTheta = y_test[i][4]
-            predVega = pred[i][5]
-            testVega = y_test[i][5]
-
-        fig, axs = plt.subplots(2, 3)
-
-        axs[0][0].plot(testIv, predIv)
-        axs[0][1].plot(testDelta, predDelta)
-        axs[0][2].plot(testGamma, predGamma)
-        axs[1][0].plot(testRho, predRho)
-        axs[1][1].plot(testTheta, predTheta)
-        axs[1][2].plot(testVega, predVega)
-
-        plt.show()
-
-        # doesnt work wtf, try plotting individual ones i guess?
-
-        plt.clf()
