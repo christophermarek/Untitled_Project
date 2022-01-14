@@ -30,6 +30,11 @@ DATASETPATH
 model_name
 model_path
 
+OUTPUT
+DATASETPATH
+model_name
+model_name.ckpt
+END
 
 !
 
@@ -62,3 +67,8 @@ END
 
 !
 
+OUTPUT
+TEST_DATASET_GENERATION
+BlackScholesModel_Simple_Greeks
+model_name.ckpt
+END

@@ -3,11 +3,9 @@ import sys
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from time import time
 from torch import nn, optim
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from datetime import datetime
 import os
 
 # The "forward pass" refers to calculation process, values of the output layers from the inputs data. It's traversing through all neurons from first to last layer.
@@ -22,6 +20,8 @@ import os
 # "Epoch" means passing the entire data set in batches.
 # One epoch contains (number_of_items / batch_size) iterations
 
+np.random.seed(0)
+torch.manual_seed(0)
 
 # load data into train set
 def loadData(fileDir):
