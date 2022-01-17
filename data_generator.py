@@ -76,7 +76,7 @@ class DataGenerator():
 
             # price = black_scholes_merton(flag, S, K, t, r, sigma, q)
             bsCall = black_scholes_merton('c', underlyingPrice, strike, genMaturity, genInterest, genVolatility, genDividends)
-            bsCall_implied_volatility = implied_volatility(bsCall, underlyingPrice, strike, genMaturity, genInterest, genDividends, 'c')
+            # bsCall_implied_volatility = implied_volatility(bsCall, underlyingPrice, strike, genMaturity, genInterest, genDividends, 'c')
             bsCall_delta = delta('c', underlyingPrice, strike, genMaturity, genInterest, genVolatility, genDividends)
             bsCall_gamma = gamma('c', underlyingPrice, strike, genMaturity, genInterest, genVolatility, genDividends)
             bsCall_rho = rho('c', underlyingPrice, strike, genMaturity, genInterest, genVolatility, genDividends)
@@ -84,8 +84,12 @@ class DataGenerator():
             bsCall_vega = vega('c', underlyingPrice, strike, genMaturity, genInterest, genVolatility, genDividends)
 
 
+            # file.write(str(genMoneyness) + "," + str(genMaturity) +
+            #            "," + str(genDividends) + "," + str(genInterest) + "," + str(genVolatility) +"," + str(bsCall) +"," + str(bsCall_implied_volatility) +"," + str(bsCall_delta) + 
+            #            "," + str(bsCall_gamma) + "," + str(bsCall_rho) +"," + str(bsCall_theta) + "," + str(bsCall_vega) +"\n")
+            
             file.write(str(genMoneyness) + "," + str(genMaturity) +
-                       "," + str(genDividends) + "," + str(genInterest) + "," + str(genVolatility) +"," + str(bsCall) +"," + str(bsCall_implied_volatility) +"," + str(bsCall_delta) + 
+                       "," + str(genDividends) + "," + str(genInterest) + "," + str(genVolatility) +"," + str(bsCall) + "," + str(bsCall_delta) + 
                        "," + str(bsCall_gamma) + "," + str(bsCall_rho) +"," + str(bsCall_theta) + "," + str(bsCall_vega) +"\n")
 
         file.close()

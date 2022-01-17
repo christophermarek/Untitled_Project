@@ -34,41 +34,93 @@ OUTPUT
 DATASETPATH
 model_name
 model_name.ckpt
+percent(percent of dataset to output, in decimal ie 0.1 = 10%)
 END
 
 !
+
 
 !
 
 COMMENT THE COMPLETED CONFIG VALUES BEFORE WE GO TO BATCH THEM ALL AT THE END
 
+
+
 GENERATEDATASET
-TEST_DATASET_GENERATION
-100
+GREEKS_DATASET
+5000000
 END
 
 TRAIN
-TEST_DATASET_GENERATION
+GREEKS_DATASET
 BlackScholesModel_Simple_Greeks
 None
 0.1
-2
+15
 END
-
-OUTPUT MODEL INSTRUCTION, test (MSE) is separate to output (plt)
-
 
 TEST
-TEST_DATASET_GENERATION
+GREEKS_DATASET
 BlackScholesModel_Simple_Greeks
-model_name.ckpt
+BlackScholesModel_Simple_Greeks.ckpt
 END
 
+
+OUTPUT
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks
+BlackScholesModel_Simple_Greeks.ckpt
+0.10
+END
+
+GENERATEDATASET
+GREEKS_DATASET
+3000000
+END
+
+TRAIN
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks_2layer
+None
+0.1
+20
+END
+
+TRAIN
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks_1layer
+None
+0.1
+17
+END
+
+OUTPUT
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks_2layer
+BlackScholesModel_Simple_Greeks_2layer.ckpt
+1.0
+END
+
+OUTPUT
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks_1layer
+BlackScholesModel_Simple_Greeks_1layer.ckpt
+1.0
+END
+
+TRAIN
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks_4layer
+None
+0.01
+100
+END
 
 !
 
 OUTPUT
-TEST_DATASET_GENERATION
-BlackScholesModel_Simple_Greeks
-model_name.ckpt
+GREEKS_DATASET
+BlackScholesModel_Simple_Greeks_4layer
+BlackScholesModel_Simple_Greeks_4layer.ckpt
+1.0
 END

@@ -68,16 +68,26 @@ def loadData(fileDir):
 def trainModel(model, optimizer, lossFN, input, output, numEpochs):
     model.train()
     # begin to train
+    logger = list()
+    logger.append(model.name)
     for i in range(numEpochs):
-        print('Epoch: ', i)
-
+        print('STEP: ', i)
+        logger.append('STEP: ' + str(i))
         def closure():
             optimizer.zero_grad()
             out = model(input.float())
             loss = lossFN(out, output.float())
+            # print('loss:', loss.item())
+            logger.append('loss: ' + str(loss.item()))
             loss.backward()
             return loss
         optimizer.step(closure)
+    logger.append('DONE')
+    
+    with open('modeltrainingoutput.txt', 'a+') as f:
+        for log_entry in logger:
+            f.write(log_entry + '\n')
+    
 
 
 def testModel(model, lossFN, testInput, testOutput):

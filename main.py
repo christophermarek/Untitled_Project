@@ -15,8 +15,12 @@ from neural_network import loadData, trainModel, testModel
 
 def get_model(model_name):
     runningModel = False
-    if model_name == 'BlackScholesModel_Simple_Greeks':
-        runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks()
+    if model_name == 'BlackScholesModel_Simple_Greeks_1layer':
+        runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks_1layer()
+    elif model_name == 'BlackScholesModel_Simple_Greeks_2layer':
+        runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks_2layer()
+    elif model_name == 'BlackScholesModel_Simple_Greeks_4layer':
+        runningModel = mlModelsClass.BlackScholesModel_Simple_Greeks_4layer()
     return runningModel
 
 
@@ -118,6 +122,7 @@ def instruction_output_model(input):
     dataset_path = input[0]
     model_name = input[1]
     model_path = input[2]
+    percent_dataset = float(input[3])
 
     dataSet = loadData(dataset_path)
     if not dataSet:
@@ -133,10 +138,9 @@ def instruction_output_model(input):
     if not os.path.exists('model_output/' + model_name):
         os.makedirs('model_output/' + model_name)
 
-
     predIv, predDelta, predGamma, predRho, predTheta, predVega, testIv, testDelta, testGamma, testRho, testTheta, testVega = list(
     ), list(), list(), list(), list(), list(), list(), list(), list(), list(), list(), list()
-    for i in range(len(pred)):
+    for i in range(round(len(pred) * percent_dataset)):
         predIv.append(pred[i][0])
         testIv.append(y_test[i][0])
         predDelta.append(pred[i][1])

@@ -80,16 +80,62 @@ class BlackScholesModel_Simple4Layer(nn.Module):
         x = self.model(input)
         return x
 
-class BlackScholesModel_Simple_Greeks(nn.Module):
+class BlackScholesModel_Simple_Greeks_1layer(nn.Module):
+    
+    name = 'BlackScholesModel_Simple_Greeks_1layer'
     
     def __init__(self):
         input_size = 5
         hidden_sizes = [10, 10]
         output_size = 6
-        super(BlackScholesModel_Simple_Greeks, self).__init__()
+        super(BlackScholesModel_Simple_Greeks_1layer, self).__init__()
         self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
                                    nn.ReLU(),
                                    nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+
+class BlackScholesModel_Simple_Greeks_2layer(nn.Module):
+    
+    name = 'BlackScholesModel_Simple_Greeks_2layer'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [10, 10]
+        output_size = 6
+        super(BlackScholesModel_Simple_Greeks_2layer, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+
+class BlackScholesModel_Simple_Greeks_4layer(nn.Module):
+    
+    name = 'BlackScholesModel_Simple_Greeks_4layer'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [10, 10]
+        output_size = 6
+        super(BlackScholesModel_Simple_Greeks_4layer, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(10, 50),
+                                   nn.ReLU(),
+                                   nn.Linear(50, 25),
+                                   nn.ReLU(),
+                                   nn.Linear(25, 10),
                                    nn.ReLU(),
                                    nn.Linear(hidden_sizes[1], output_size),
                                    )
