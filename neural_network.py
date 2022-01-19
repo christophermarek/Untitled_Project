@@ -1,4 +1,6 @@
 # Definetly dont use all these imports anymore
+from array import array
+from math import nan
 import sys
 import numpy as np
 import torch
@@ -71,11 +73,15 @@ def loadData(fileDir, output_columns):
 
 
 def trainModel(model, optimizer, lossFN, input, output, numEpochs):
+    
     model.train()
     # begin to train
     logger = list()
     logger.append(model.name)
+    flag = False
     for i in range(numEpochs):
+        if flag:
+            break
         print('STEP: ', i)
         logger.append('STEP: ' + str(i))
         def closure():
@@ -87,6 +93,12 @@ def trainModel(model, optimizer, lossFN, input, output, numEpochs):
             loss.backward()
             return loss
         optimizer.step(closure)
+        print(logger)
+        if 'loss: nan' in logger:
+            print('nan loss detected, ending training \n')
+            logger.append('NAN LOSS DETECTED')
+        return
+        
     logger.append('DONE')
     
     with open('modeltrainingoutput.txt', 'a+') as f:

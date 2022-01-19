@@ -176,7 +176,6 @@ BlackScholesModel_Simple_Greeks_4layer.ckpt
 1.0
 END
 
-!
 
 TRAIN
 GREEKS_DATASET_NOIV
@@ -186,6 +185,8 @@ None
 50
 delta
 END
+
+!
 
 TRAIN
 GREEKS_DATASET_NOIV
