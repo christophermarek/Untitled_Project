@@ -61,7 +61,7 @@ class DataGenerator():
 
         # will reset file every time it runs
         file = open("generated_datasets/" + self.title + '.csv', "w")
-        file.write("moneyness,timetomaturity,dividendrate,interestrate,volatility,BS-Call,iv,delta,gamma,rho,theta,vega\n")
+        file.write("moneyness,timetomaturity,dividendrate,interestrate,volatility,BS-Call,delta,gamma,rho,theta,vega\n")
 
         for i in range(size):
             # we round to maintain decimal place

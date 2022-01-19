@@ -24,8 +24,11 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 # load data into train set
-def loadData(fileDir):
+# where output_columns are the columns we are keeping for train/test
+def loadData(fileDir, output_columns):
     fileDir = 'generated_datasets/' + fileDir + '.csv'
+        
+    print(output_columns)
 
     # load data and make training set
     # Get dataset
@@ -46,8 +49,10 @@ def loadData(fileDir):
     # price not used for greeks, but it is actually.
     df = df.drop(columns="BS-Call")
 
-    X = df.drop(columns=['iv', 'delta', 'gamma', 'rho', 'theta', 'vega'])
-    y = df[['iv', 'delta', 'gamma', 'rho', 'theta', 'vega']]
+    X = df.drop(columns=['delta', 'gamma', 'rho', 'theta', 'vega'])
+    # y = df[['delta', 'gamma', 'rho', 'theta', 'vega']]
+    # X = df.drop(columns=output_columns)
+    y = df[output_columns]
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=0)
 
@@ -57,9 +62,9 @@ def loadData(fileDir):
     # Need to reshape y tensor so it has the same shape as X
     y_train = torch.tensor(y_train.values, dtype=torch.float64)
     y_test = torch.tensor(y_test.values, dtype=torch.float64)
-    new_shape_ytrain = (len(y_train), 6)
+    new_shape_ytrain = (len(y_train), 1)
     y_train = y_train.view(new_shape_ytrain)
-    new_shape_ytest = (len(y_test), 6)
+    new_shape_ytest = (len(y_test), 1)
     y_test = y_test.view(new_shape_ytest)
     print('dataset loaded')
     return [X_train, X_test, y_train, y_test]
@@ -87,7 +92,6 @@ def trainModel(model, optimizer, lossFN, input, output, numEpochs):
     with open('modeltrainingoutput.txt', 'a+') as f:
         for log_entry in logger:
             f.write(log_entry + '\n')
-    
 
 
 def testModel(model, lossFN, testInput, testOutput):

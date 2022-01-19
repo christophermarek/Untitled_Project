@@ -87,7 +87,7 @@ class BlackScholesModel_Simple_Greeks_1layer(nn.Module):
     def __init__(self):
         input_size = 5
         hidden_sizes = [10, 10]
-        output_size = 6
+        output_size = 5
         super(BlackScholesModel_Simple_Greeks_1layer, self).__init__()
         self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
                                    nn.ReLU(),
@@ -106,7 +106,7 @@ class BlackScholesModel_Simple_Greeks_2layer(nn.Module):
     def __init__(self):
         input_size = 5
         hidden_sizes = [10, 10]
-        output_size = 6
+        output_size = 5
         super(BlackScholesModel_Simple_Greeks_2layer, self).__init__()
         self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
                                    nn.ReLU(),
@@ -127,7 +127,7 @@ class BlackScholesModel_Simple_Greeks_4layer(nn.Module):
     def __init__(self):
         input_size = 5
         hidden_sizes = [10, 10]
-        output_size = 6
+        output_size = 5
         super(BlackScholesModel_Simple_Greeks_4layer, self).__init__()
         self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
                                    nn.ReLU(),
@@ -136,6 +136,169 @@ class BlackScholesModel_Simple_Greeks_4layer(nn.Module):
                                    nn.Linear(50, 25),
                                    nn.ReLU(),
                                    nn.Linear(25, 10),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+
+
+class BS_DELTA_SIMPLE(nn.Module):
+    
+    name = 'BS_DELTA_SIMPLE'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [10, 10]
+        output_size = 1
+        super(BS_DELTA_SIMPLE, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+    
+class BS_GAMMA_SIMPLE(nn.Module):
+    
+    name = 'BS_GAMMA_SIMPLE'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [10, 10]
+        output_size = 1
+        super(BS_GAMMA_SIMPLE, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+    
+class BS_RHO_SIMPLE(nn.Module):
+    
+    name = 'BS_RHO_SIMPLE'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [10, 10]
+        output_size = 1
+        super(BS_RHO_SIMPLE, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+    
+class BS_DELTA_SIMPLE2(nn.Module):
+    
+    name = 'BS_DELTA_SIMPLE2'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [50, 50]
+        output_size = 1
+        super(BS_DELTA_SIMPLE2, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+    
+class BS_GAMMA_SIMPLE2(nn.Module):
+    
+    name = 'BS_GAMMA_SIMPLE2'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [50, 50]
+        output_size = 1
+        super(BS_GAMMA_SIMPLE2, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+    
+class BS_RHO_SIMPLE2(nn.Module):
+    
+    name = 'BS_RHO_SIMPLE2'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [50, 50]
+        output_size = 1
+        super(BS_RHO_SIMPLE2, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+
+class BS_THETA_SIMPLE2(nn.Module):
+    
+    name = 'BS_THETA_SIMPLE'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [50, 50]
+        output_size = 1
+        super(BS_THETA_SIMPLE2, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[1], output_size),
+                                   )
+    def forward(self, input):
+        x = self.model(input)
+        return x
+    
+class BS_VEGA_SIMPLE2(nn.Module):
+    
+    name = 'BS_VEGA_SIMPLE'
+    
+    def __init__(self):
+        input_size = 5
+        hidden_sizes = [50, 50]
+        output_size = 1
+        super(BS_VEGA_SIMPLE2, self).__init__()
+        self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_sizes[0], hidden_sizes[1]),
                                    nn.ReLU(),
                                    nn.Linear(hidden_sizes[1], output_size),
                                    )
