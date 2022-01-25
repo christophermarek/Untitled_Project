@@ -22,6 +22,10 @@ import os
 # "Epoch" means passing the entire data set in batches.
 # One epoch contains (number_of_items / batch_size) iterations
 
+
+# https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
+# important i read this, keep in project doc
+
 np.random.seed(0)
 torch.manual_seed(0)
 
@@ -93,11 +97,11 @@ def trainModel(model, optimizer, lossFN, input, output, numEpochs):
             loss.backward()
             return loss
         optimizer.step(closure)
-        print(logger)
+        
         if 'loss: nan' in logger:
             print('nan loss detected, ending training \n')
             logger.append('NAN LOSS DETECTED')
-        return
+            break
         
     logger.append('DONE')
     
