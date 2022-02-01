@@ -12,6 +12,9 @@ import models as mlModelsClass
 
 from neural_network import loadData, trainModel, testModel
 
+# https://eadains.github.io/OptionallyBayesHugo/posts/option_pricing/
+# https://www.ralphrudd.com/docs/2-projects/deep-hedging/neural-networks-for-hedging-1/
+
 
 def get_model(model_name):
     runningModel = False
