@@ -19,9 +19,11 @@ class BlackScholesModel_Simple(nn.Module):
 
 class BlackScholesModel_Simple2Layer(nn.Module):
 
+    name = 'BlackScholesModel_Simple2Layer'
+
     def __init__(self, numHiddenNeurons):
         input_size = 5
-        hidden_sizes = [numHiddenNeurons, numHiddenNeurons]
+        hidden_sizes = [25, 25]
         output_size = 1
         super(BlackScholesModel_Simple2Layer, self).__init__()
         self.model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),

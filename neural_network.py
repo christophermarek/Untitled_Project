@@ -53,12 +53,21 @@ def loadData(fileDir, output_columns):
     # print(df.head())
 
     # price not used for greeks, but it is actually.
-    df = df.drop(columns="BS-Call")
+    # df = df.drop(columns="BS-Call")
 
-    X = df.drop(columns=['delta', 'gamma', 'rho', 'theta', 'vega'])
+    # X = df.drop(columns=['delta', 'gamma', 'rho', 'theta', 'vega'])
+    # X = df.drop(columns="BS-Call")
     # y = df[['delta', 'gamma', 'rho', 'theta', 'vega']]
     # X = df.drop(columns=output_columns)
-    y = df[output_columns]
+    # y = df[output_columns]
+    # y = df["Bs-Call"]
+    X = df.drop(columns=['BS-Call', 'delta', 'gamma', 'rho', 'theta', 'vega'])
+    print('printing x head')
+    print(X.head())
+    print('printing y head')
+    y = df['BS-Call']
+    print(y.head())
+    print('done printing y head')
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=0)
 

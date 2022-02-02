@@ -45,6 +45,10 @@ def get_model(model_name):
         runningModel = mlModelsClass.BS_THETA_SIMPLE2()
     elif model_name == 'BS_VEGA_SIMPLE2':
         runningModel = mlModelsClass.BS_VEGA_SIMPLE2()
+    
+    elif model_name == 'BlackScholesModel_Simple2Layer':
+        runningModel = mlModelsClass.BlackScholesModel_Simple2Layer(0)
+        
     return runningModel
 
 
@@ -114,6 +118,7 @@ def instruction_test_model(input):
     model_name = input[1]
     model_path = input[2]
     percent_dataset = input[3] # unused
+    # print(input[4])
     output_columns = input[4].split(',')
     
 
@@ -148,17 +153,20 @@ def instruction_output_model(input):
     print('INSTRUCTION OUTPUT Model')
 
     pred, error = instruction_test_model(input)
+    # print(len(pred))
 
     dataset_path = input[0]
     model_name = input[1]
     model_path = input[2]
     percent_dataset = float(input[3])
 
-    dataSet = loadData(dataset_path)
+    dataSet = loadData(dataset_path, 'none')
     if not dataSet:
         print('INSTRUCTION FAILED: TEST MODEL, invalid dataset path')
         return
     y_test = dataSet[3]
+    # print(len(y_test))
+    
 
     now = datetime.now()
 
@@ -168,52 +176,66 @@ def instruction_output_model(input):
     if not os.path.exists('model_output/' + model_name):
         os.makedirs('model_output/' + model_name)
         
+        
     
     # THIS IS REALLY INNEFFICIENT, CANT I PLOT IN THE SAME LOOP? I ALREADY KNOW SIZE OF X/Y
-    predDelta, predGamma, predRho, predTheta, predVega, testDelta, testGamma, testRho, testTheta, testVega = list(
-    ), list(), list(), list(), list(), list(), list(), list(), list(), list()
-    for i in range(round(len(pred) * percent_dataset)):
-        predDelta.append(pred[i][0])
-        testDelta.append(y_test[i][0])
-        predGamma.append(pred[i][1])
-        testGamma.append(y_test[i][1])
-        predRho.append(pred[i][2])
-        testRho.append(y_test[i][2])
-        predTheta.append(pred[i][3])
-        testTheta.append(y_test[i][3])
-        predVega.append(pred[i][4])
-        testVega.append(y_test[i][4])
+    # predDelta, predGamma, predRho, predTheta, predVega, testDelta, testGamma, testRho, testTheta, testVega = list(
+    # ), list(), list(), list(), list(), list(), list(), list(), list(), list()
+    # for i in range(round(len(pred) * percent_dataset)):
+    #     predDelta.append(pred[i][0])
+    #     testDelta.append(y_test[i][0])
+    #     predGamma.append(pred[i][1])
+    #     testGamma.append(y_test[i][1])
+    #     predRho.append(pred[i][2])
+    #     testRho.append(y_test[i][2])
+    #     predTheta.append(pred[i][3])
+    #     testTheta.append(y_test[i][3])
+    #     predVega.append(pred[i][4])
+    #     testVega.append(y_test[i][4])
 
+
+    list_pred, list_test = list(), list()
+    for i in range(round(len(pred) * percent_dataset)):
+        list_pred.append(pred[i])
+        list_test.append(y_test[i])
+    
+    plt.clf()
+    plt.scatter(list_pred, list_test, marker=".", label="ml prediction")
+    plt.xlabel('Prediction call price')
+    plt.ylabel('Test call price')
+    plt.savefig('model_output/' + model_name + "/Call" + '.png')
+    plt.clf()
+    
     # plt.clf()
     # plt.scatter(testIv, predIv, marker=".", label="ml prediction", color='red')
     # plt.xlabel('Test IV')
     # plt.ylabel('Prediction IV')
     # plt.savefig('model_output/' + model_name + "/IV" + '.png')
-    plt.clf()
-    plt.scatter(testDelta, predDelta, marker=".", label="ml prediction", color='red')
-    plt.xlabel('Test DELTA')
-    plt.ylabel('Prediction DELTA')
-    plt.savefig('model_output/' + model_name + "/DELTA" + '.png')
-    plt.clf()
-    plt.scatter(testGamma, predGamma, marker=".", label="ml prediction", color='red')
-    plt.xlabel('Test GAMMA')
-    plt.ylabel('Prediction GAMMA')
-    plt.savefig('model_output/' + model_name + "/GAMMA" + '.png')
-    plt.clf()
-    plt.scatter(testRho, predRho, marker=".", label="ml prediction", color='red')
-    plt.xlabel('Test RHO')
-    plt.ylabel('Prediction RHO')
-    plt.savefig('model_output/' + model_name + "/RHO" + '.png')
-    plt.clf()
-    plt.scatter(testTheta, predTheta, marker=".", label="ml prediction", color='red')
-    plt.xlabel('Test THETA')
-    plt.ylabel('Prediction THETA')
-    plt.savefig('model_output/' + model_name + "/THETA" + '.png')
-    plt.clf()
-    plt.scatter(testVega, predVega, marker=".", label="ml prediction", color='red')
-    plt.xlabel('Test VEGA')
-    plt.ylabel('Prediction VEGA')
-    plt.savefig('model_output/' + model_name + "/VEGA" + '.png')
+    # plt.clf()
+    # plt.scatter(testDelta, predDelta, marker=".", label="ml prediction", color='red')
+    # plt.xlabel('Test DELTA')
+    # plt.ylabel('Prediction DELTA')
+    # plt.savefig('model_output/' + model_name + "/DELTA" + '.png')
+    # plt.clf()
+    # plt.scatter(testGamma, predGamma, marker=".", label="ml prediction", color='red')
+    # plt.xlabel('Test GAMMA')
+    # plt.ylabel('Prediction GAMMA')
+    # plt.savefig('model_output/' + model_name + "/GAMMA" + '.png')
+    # plt.clf()
+    # plt.scatter(testRho, predRho, marker=".", label="ml prediction", color='red')
+    # plt.xlabel('Test RHO')
+    # plt.ylabel('Prediction RHO')
+    # plt.savefig('model_output/' + model_name + "/RHO" + '.png')
+    # plt.clf()
+    # plt.scatter(testTheta, predTheta, marker=".", label="ml prediction", color='red')
+    # plt.xlabel('Test THETA')
+    # plt.ylabel('Prediction THETA')
+    # plt.savefig('model_output/' + model_name + "/THETA" + '.png')
+    # plt.clf()
+    # plt.scatter(testVega, predVega, marker=".", label="ml prediction", color='red')
+    # plt.xlabel('Test VEGA')
+    # plt.ylabel('Prediction VEGA')
+    # plt.savefig('model_output/' + model_name + "/VEGA" + '.png')
     
     print('INSTRUCTION Complete: OUTPUT Model \n')
 
