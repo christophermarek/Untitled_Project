@@ -26,6 +26,7 @@ with torch.no_grad():
 
 x.requires_grad = True
 z = model(x)
+print(z)
 z.sum().backward()
 
 with torch.no_grad():
