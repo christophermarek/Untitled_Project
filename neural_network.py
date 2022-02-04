@@ -73,13 +73,16 @@ def loadData(fileDir, output_columns):
 
     # convert to tensors
     X_train = torch.tensor(X_train.values, dtype=torch.float64)
-    X_test = torch.tensor(X_test.values, dtype=torch.float64)
+    X_test = torch.tensor(X_test.values, dtype=torch.float32, requires_grad=True)
     # Need to reshape y tensor so it has the same shape as X
     y_train = torch.tensor(y_train.values, dtype=torch.float64)
-    y_test = torch.tensor(y_test.values, dtype=torch.float64)
+    y_test = torch.tensor(y_test.values, dtype=torch.float32, requires_grad=True)
+    
     new_shape_ytrain = (len(y_train), 1)
     y_train = y_train.view(new_shape_ytrain)
+    
     new_shape_ytest = (len(y_test), 1)
+    
     y_test = y_test.view(new_shape_ytest)
     print('dataset loaded')
     return [X_train, X_test, y_train, y_test]
@@ -122,8 +125,19 @@ def trainModel(model, optimizer, lossFN, input, output, numEpochs):
 def testModel(model, lossFN, testInput, testOutput):
     # begin to predict, no need to track gradient here
     model.eval()
-    with torch.no_grad():
-        pred = model(testInput.float())
-    cost = lossFN(pred, testOutput.float())
+    # with torch.no_grad():
+    #     pred = model(testInput.float())
+    print('printing testOutput')
+    print(testOutput)
+    pred = model(testInput)
+    print('printing pred')
+    print(pred)
+    print('printing test')
+    print(testOutput)
+    cost = lossFN(pred, testOutput)
+    # compute gradient
+    cost.backward()
+    print('hi')
+    print(cost)
     print("mean squared error:", cost.item())
     return [pred, cost.item()]

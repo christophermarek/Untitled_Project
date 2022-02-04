@@ -271,7 +271,6 @@ vega
 END
 
 
-!
 
 TRAIN
 GREEKS_DATASET_NOIV
@@ -284,6 +283,16 @@ END
 
 
 OUTPUT
+GREEKS_DATASET_NOIV
+BlackScholesModel_Simple2Layer
+BlackScholesModel_Simple2Layer.ckpt
+1.0
+N/A
+END
+
+!
+
+TEST
 GREEKS_DATASET_NOIV
 BlackScholesModel_Simple2Layer
 BlackScholesModel_Simple2Layer.ckpt

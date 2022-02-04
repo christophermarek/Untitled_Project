@@ -131,7 +131,7 @@ def instruction_test_model(input):
 
     X_test = dataSet[1]
     y_test = dataSet[3]
-
+    print(X_test)
     runningModel = get_model(model_name)
     if not runningModel:
         print('INSTRUCTION FAILED: TEST MODEL, invalid model_name')
