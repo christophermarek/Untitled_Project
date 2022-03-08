@@ -15,6 +15,9 @@ from neural_network import loadData, trainModel, testModel
 # https://eadains.github.io/OptionallyBayesHugo/posts/option_pricing/
 # https://www.ralphrudd.com/docs/2-projects/deep-hedging/neural-networks-for-hedging-1/
 
+# https://datascience.stackexchange.com/questions/25024/strange-behavior-with-adam-optimizer-when-training-for-too-long
+# can just duplicate and make multiple files to test different params rapidly, no point wasting time designing a perfect code solution right now
+# with a save, and I guess a large dataset?
 
 def get_model(model_name):
     runningModel = False

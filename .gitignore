@@ -3,3 +3,10 @@ models
 model_output
 generated_datasets
 node_modules
+test
+output.txt
+autodiff_dataset.csv
+goodcopy_output
+moneyness_model
+*.ckpt
+*.csv
