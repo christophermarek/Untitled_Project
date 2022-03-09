@@ -8,8 +8,8 @@ from torch import nn, optim
 import pandas as pd
 
 # ensure reproducability
-# np.random.seed(0)
-# torch.manual_seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
 
 # helper to calculate errors for greek
 
@@ -25,16 +25,13 @@ def rmse_metric(actual, predicted):
 
 model = torch.nn.Sequential(
     torch.nn.Linear(4, 3),
-    torch.nn.ReLU(),
     torch.nn.Linear(3, 3),
-    torch.nn.ReLU(),
     torch.nn.Linear(3, 1),
-    torch.nn.ELU()
 )
 
 
 lossfn = nn.MSELoss()
-opt = torch.optim.Adam(model.parameters(), lr=0.0001)
+opt = torch.optim.Adam(model.parameters(), lr=0.001)
 
 std_norm_cdf = Normal(0, 1).cdf
 
@@ -130,8 +127,9 @@ for m in range(num_epoches):
     moneyness = X[m][1] / X[m][0]
     data_row = X[m][2:]
     data_row = np.insert(data_row, 0, moneyness)
-
+    # print(torch.tensor(data_row).float())
     model_out = model(torch.tensor(data_row).float())
+    # print(model_out)
     train_y = torch.tensor([prices[m]])
     loss = lossfn(model_out, train_y)
     loss_item = loss.item()
@@ -253,8 +251,8 @@ plt.savefig('moneyness_model/' + "stricttrain" + '.png', bbox_inches="tight")
 plt.clf()
 
 # save model for easy testing of final output
-torch.save(model.state_dict(), 'auto_diff_greeks+' + str(num_epoches) + '.ckpt')
-model.load_state_dict(torch.load('auto_diff_greeks+' + str(num_epoches) + '.ckpt'))
+torch.save(model.state_dict(), 'moneyness_model/auto_diff_greeks+' + str(num_epoches) + '.ckpt')
+# model.load_state_dict(torch.load('auto_diff_greeks+' + str(num_epoches) + '.ckpt'))
 # model.load_state_dict(torch.load('auto_diff_greeks+10000.ckpt'))
 
 
@@ -320,8 +318,10 @@ for i in range(int(num_epoches* 0.2)):
 for i in range(int(num_epoches*0.2)):
     moneyness = val_x_vals[i][1] / val_x_vals[i][0]
     data_row = torch.tensor([moneyness, val_x_vals[i][2].item(), val_x_vals[i][3].item(), val_x_vals[i][4].item()])
-    data_row.requires_grad = True   
+    data_row.requires_grad = True
+    # print(data_row)
     z = model(data_row)
+    # print(z)
     
     pred_price.append(z.item())
     z.sum().backward()
@@ -346,10 +346,11 @@ print("test error: " + str(test_error))
 # rho_errors = (rmse_metric(rho, pred_rho))
 
 
-plt.scatter(pred_price, val_prices, label='pred price vs actual')
+plt.scatter(val_prices, pred_price, label='pred price vs actual')
 plt.title('price MSE: ' + str(test_error))
-plt.xlabel('pred price')
-plt.ylabel('actual price')
+plt.xlabel('actual price')
+plt.ylabel('pred price')
+
 plt.savefig('moneyness_model/final_test_price' + '.png', bbox_inches="tight")
 plt.clf()
 
@@ -413,6 +414,8 @@ for i in range(len(val_prices)):
     
 plt.scatter(val_prices, res_prices, label='delta test error')
 plt.title('price MSE: ' + str(test_error))
+plt.xlabel('validation set')
+plt.xlabel('residuals')
 plt.savefig('moneyness_model/price_residual_plot' + '.png', bbox_inches="tight")
 plt.clf()
 

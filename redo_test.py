@@ -22,13 +22,25 @@ def rmse_metric(actual, predicted):
 
 
 model = torch.nn.Sequential(
-    torch.nn.Linear(5, 3),
-    torch.nn.Sigmoid(),
-    torch.nn.Linear(3, 3),
-    torch.nn.Sigmoid(),
-    torch.nn.Linear(3, 1),
+    torch.nn.Linear(5, 400),
+    torch.nn.SiLU(),
+    torch.nn.Linear(400, 400),
+    torch.nn.SiLU(),
+    torch.nn.Linear(400, 400),
+    torch.nn.SiLU(),
+    torch.nn.Linear(400, 1),
+    torch.nn.SiLU()
 )
-
+# model = torch.nn.Sequential(
+#     torch.nn.Linear(5, 3),
+#     torch.nn.SiLU(),
+#     torch.nn.Linear(3, 3),
+#     torch.nn.SiLU(),
+#     torch.nn.Linear(3, 3),
+#     torch.nn.SiLU(),
+#     torch.nn.Linear(3, 1),
+#     torch.nn.SiLU(),
+# )
 
 lossfn = nn.MSELoss()
 opt = torch.optim.Adam(model.parameters(), lr=0.0001)
@@ -105,7 +117,7 @@ prices = torch.tensor(Y.values, dtype=torch.float32)
 greeks = np.array(GREEKS.values)
 
 
-num_epoches = 10000
+num_epoches = 1000000
 
 training_avg = 0
 count = 0
