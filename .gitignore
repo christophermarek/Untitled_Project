@@ -10,3 +10,5 @@ goodcopy_output
 moneyness_model
 *.ckpt
 *.csv
+delta_output
+theta_output

@@ -1,4 +1,5 @@
 from math import sqrt
+from re import A
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -31,6 +32,7 @@ model = torch.nn.Sequential(
     torch.nn.Linear(400, 1),
     torch.nn.SiLU()
 )
+
 # model = torch.nn.Sequential(
 #     torch.nn.Linear(5, 3),
 #     torch.nn.SiLU(),
@@ -119,141 +121,141 @@ greeks = np.array(GREEKS.values)
 
 num_epoches = 1000000
 
-training_avg = 0
-count = 0
-training_avgs = []
-training_loss = []
+# training_avg = 0
+# count = 0
+# training_avgs = []
+# training_loss = []
 
 
-test_error = []
-delta_error = []
-theta_error = []
-vega_error = []
-rho_error = []
+# test_error = []
+# delta_error = []
+# theta_error = []
+# vega_error = []
+# rho_error = []
         
-# 100% of the array for training data, validation set is generated when we get there
-for m in range(num_epoches):
-    opt.zero_grad()
-    # WHAT IF I PASS THE WHOLE SET INSTEAD OF JUST ONE IDICE AT A TIME?
-    model_out = model(x_vals[m].float())
-    train_y = torch.tensor([prices[m]])
-    loss = lossfn(model_out, train_y)
-    loss_item = loss.item()
+# # 100% of the array for training data, validation set is generated when we get there
+# for m in range(num_epoches):
+#     opt.zero_grad()
+#     # WHAT IF I PASS THE WHOLE SET INSTEAD OF JUST ONE IDICE AT A TIME?
+#     model_out = model(x_vals[m].float())
+#     train_y = torch.tensor([prices[m]])
+#     loss = lossfn(model_out, train_y)
+#     loss_item = loss.item()
 
-    training_avg = training_avg + (loss_item - training_avg) / (count + 1)
-    count += 1
-    training_avgs.append(training_avg)
-    training_loss.append(loss_item)
+#     training_avg = training_avg + (loss_item - training_avg) / (count + 1)
+#     count += 1
+#     training_avgs.append(training_avg)
+#     training_loss.append(loss_item)
 
-    loss.backward()
-    opt.step()
+#     loss.backward()
+#     opt.step()
 
-    with open("output.txt", "a+") as file:
-        file.write("epoch num + " + str(m) +
-                   " with loss: " + str(loss_item) + "\n")
-        file.close()
+#     with open("output.txt", "a+") as file:
+#         file.write("epoch num + " + str(m) +
+#                    " with loss: " + str(loss_item) + "\n")
+#         file.close()
         
-    # save models at checkpoints
-    if m == 10000 or m == 100000 or m == 500000 or m == 1000000:
-        torch.save(model.state_dict(), 'auto_diff_greeks+' + str(m) + '.ckpt')
+#     # save models at checkpoints
+#     if m == 10000 or m == 100000 or m == 500000 or m == 1000000:
+#         torch.save(model.state_dict(), 'auto_diff_greeks+' + str(m) + '.ckpt')
         
 
-    # Now randomly generate sample data every 100 iters to run a validation during training to evaluate loss change over time
-    if m % 100 == 0:
-        # validation set of 1000 samples, probably dont need more than this? Good question to ask in office hours though
-        test_x_vals = []
-        test_prices = []
-        test_greeks = []
-        # generate validation set
-        for i in range(100):
-            right = "C"
-            moneyness = random.uniform(0.8, 1.2)
-            underlyingPrice = 1.0
-            strike = underlyingPrice / moneyness
+#     # Now randomly generate sample data every 100 iters to run a validation during training to evaluate loss change over time
+#     if m % 100 == 0:
+#         # validation set of 1000 samples, probably dont need more than this? Good question to ask in office hours though
+#         test_x_vals = []
+#         test_prices = []
+#         test_greeks = []
+#         # generate validation set
+#         for i in range(100):
+#             right = "C"
+#             moneyness = random.uniform(0.8, 1.2)
+#             underlyingPrice = 1.0
+#             strike = underlyingPrice / moneyness
 
-            # Strike price
-            K = torch.tensor(strike, requires_grad=True)
-            # Underlying price Delta: {S.grad}
-            S = torch.tensor(underlyingPrice, requires_grad=True)
-            # total time to expiry left in years Theta: {T.grad}
-            T = torch.tensor(random.uniform(0.014, 1), requires_grad=True)
-            # volatility "Vega: {sigma.grad}
-            sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
-            # risk free interest rate Rho: {r.grad}
-            r = torch.tensor(random.uniform(0.00, 0.1), requires_grad=True)
+#             # Strike price
+#             K = torch.tensor(strike, requires_grad=True)
+#             # Underlying price Delta: {S.grad}
+#             S = torch.tensor(underlyingPrice, requires_grad=True)
+#             # total time to expiry left in years Theta: {T.grad}
+#             T = torch.tensor(random.uniform(0.014, 1), requires_grad=True)
+#             # volatility "Vega: {sigma.grad}
+#             sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+#             # risk free interest rate Rho: {r.grad}
+#             r = torch.tensor(random.uniform(0.00, 0.1), requires_grad=True)
 
-            price = bs_price(right, K, S, T, sigma, r)
+#             price = bs_price(right, K, S, T, sigma, r)
 
-            price.backward()
+#             price.backward()
             
-            test_x_vals.append(torch.tensor(
-            [K.item(), S.item(), T.item(), sigma.item(), r.item()], dtype=torch.float32))
-            test_prices.append(price.item())
+#             test_x_vals.append(torch.tensor(
+#             [K.item(), S.item(), T.item(), sigma.item(), r.item()], dtype=torch.float32))
+#             test_prices.append(price.item())
             
-            # "strike,underlying,maturity,volatility,interestrate,call_price,delta,theta,vega,rho\n")
-            test_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item()]))
+#             # "strike,underlying,maturity,volatility,interestrate,call_price,delta,theta,vega,rho\n")
+#             test_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item()]))
         
         
-        pred_prices = []
-        pred_greeks = []
-        # run model on validation set
-        for i in range(len(test_x_vals)):
-            test_x_vals[i].requires_grad = True
-            z = model(test_x_vals[i])
-            pred_prices.append(z.item())
-            z.sum().backward()
-            pred_greeks.append(test_x_vals[i].grad)
+#         pred_prices = []
+#         pred_greeks = []
+#         # run model on validation set
+#         for i in range(len(test_x_vals)):
+#             test_x_vals[i].requires_grad = True
+#             z = model(test_x_vals[i])
+#             pred_prices.append(z.item())
+#             z.sum().backward()
+#             pred_greeks.append(test_x_vals[i].grad)
             
-        test_error.append(rmse_metric(test_prices, pred_prices))
-        # THIS IS AN EASY INDEX ERROR TO MIXUP SINCE THE GREEKS AND XVALUES uSE DIFFERENT INDICES
+#         test_error.append(rmse_metric(test_prices, pred_prices))
+#         # THIS IS AN EASY INDEX ERROR TO MIXUP SINCE THE GREEKS AND XVALUES uSE DIFFERENT INDICES
         
-        test_delta, test_theta, test_vega, test_rho, pred_delta, pred_theta, pred_vega, pred_rho = [], [], [], [], [], [], [], []
-        for i in range(len(pred_greeks)):
-            pred_delta.append(pred_greeks[i][1])
-            pred_theta.append(pred_greeks[i][2])
-            pred_vega.append(pred_greeks[i][3])
-            pred_rho.append(pred_greeks[i][4])
-        for i in range(len(test_greeks)):
-            test_delta.append(test_greeks[i][0])
-            test_theta.append(test_greeks[i][1])
-            test_vega.append(test_greeks[i][2])
-            test_rho.append(test_greeks[i][3])
+#         test_delta, test_theta, test_vega, test_rho, pred_delta, pred_theta, pred_vega, pred_rho = [], [], [], [], [], [], [], []
+#         for i in range(len(pred_greeks)):
+#             pred_delta.append(pred_greeks[i][1])
+#             pred_theta.append(pred_greeks[i][2])
+#             pred_vega.append(pred_greeks[i][3])
+#             pred_rho.append(pred_greeks[i][4])
+#         for i in range(len(test_greeks)):
+#             test_delta.append(test_greeks[i][0])
+#             test_theta.append(test_greeks[i][1])
+#             test_vega.append(test_greeks[i][2])
+#             test_rho.append(test_greeks[i][3])
             
         
-        delta_error.append(rmse_metric(test_delta, pred_delta))
-        theta_error.append(rmse_metric(test_theta, pred_theta))
-        vega_error.append(rmse_metric(test_vega, pred_vega))
-        rho_error.append(rmse_metric(test_rho, pred_rho))
+#         delta_error.append(rmse_metric(test_delta, pred_delta))
+#         theta_error.append(rmse_metric(test_theta, pred_theta))
+#         vega_error.append(rmse_metric(test_vega, pred_vega))
+#         rho_error.append(rmse_metric(test_rho, pred_rho))
 
-print("training complete")
-print('generating plots of training error and of the test errors')
+# print("training complete")
+# print('generating plots of training error and of the test errors')
 
-plt.plot(list(range(0, len(test_error))), test_error,  label='price test errors')
-plt.plot(list(range(0, len(test_error))), delta_error,  label='delta test errors')
-plt.plot(list(range(0, len(test_error))), theta_error,  label='theta test errors')
-plt.plot(list(range(0, len(test_error))), vega_error,  label='vega test errors')
-plt.plot(list(range(0, len(test_error))), rho_error,  label='rho test errors')
-plt.title('test errors')
-plt.legend()
-plt.savefig('goodcopy_output/price_test_error' + '.png', bbox_inches="tight")
-plt.clf()
+# plt.plot(list(range(0, len(test_error))), test_error,  label='price test errors')
+# plt.plot(list(range(0, len(test_error))), delta_error,  label='delta test errors')
+# plt.plot(list(range(0, len(test_error))), theta_error,  label='theta test errors')
+# plt.plot(list(range(0, len(test_error))), vega_error,  label='vega test errors')
+# plt.plot(list(range(0, len(test_error))), rho_error,  label='rho test errors')
+# plt.title('test errors')
+# plt.legend()
+# plt.savefig('goodcopy_output/price_test_error' + '.png', bbox_inches="tight")
+# plt.clf()
 
-plt.plot(list(range(0, count)), training_avgs,  label='price training average error over time')
-plt.title('average training errors')
-plt.legend()
-plt.savefig('goodcopy_output/' + "avgtrain" + '.png', bbox_inches="tight")
-plt.clf()
+# plt.plot(list(range(0, count)), training_avgs,  label='price training average error over time')
+# plt.title('average training errors')
+# plt.legend()
+# plt.savefig('goodcopy_output/' + "avgtrain" + '.png', bbox_inches="tight")
+# plt.clf()
 
-plt.plot(list(range(0, count)), training_loss,  label='price training error over time')
-plt.title('exact training errors')
-plt.legend()
-plt.savefig('goodcopy_output/' + "stricttrain" + '.png', bbox_inches="tight")
-plt.clf()
+# plt.plot(list(range(0, count)), training_loss,  label='price training error over time')
+# plt.title('exact training errors')
+# plt.legend()
+# plt.savefig('goodcopy_output/' + "stricttrain" + '.png', bbox_inches="tight")
+# plt.clf()
 
 # save model for easy testing of final output
-torch.save(model.state_dict(), 'auto_diff_greeks+' + str(num_epoches) + '.ckpt')
-model.load_state_dict(torch.load('auto_diff_greeks+' + str(num_epoches) + '.ckpt'))
-# model.load_state_dict(torch.load('auto_diff_greeks+10000.ckpt'))
+# torch.save(model.state_dict(), 'auto_diff_greeks+' + str(num_epoches) + '.ckpt')
+# model.load_state_dict(torch.load('auto_diff_greeks+' + str(num_epoches) + '.ckpt'))
+model.load_state_dict(torch.load('silu1mil.ckpt'))
 
 
 print('now evaluating validation set')
@@ -322,16 +324,29 @@ for i in range(int(num_epoches*0.2)):
     pred_price.append(z.item())
     z.sum().backward()
     pred_greeks.append(val_x_vals[i].grad)
-    delta.append(greeks[i][0])
-    theta.append(greeks[i][1])
-    vega.append(greeks[i][2])
-    rho.append(greeks[i][3])
+    delta.append(val_greeks[i][0])
+    theta.append(val_greeks[i][1])
+    vega.append(val_greeks[i][2])
+    rho.append(val_greeks[i][3])
 
 for i in range(len(pred_greeks)):
     pred_delta.append(pred_greeks[i][1])
     pred_theta.append(pred_greeks[i][2])
     pred_vega.append(pred_greeks[i][3])
     pred_rho.append(pred_greeks[i][4])
+    
+    
+# output to table for review
+output_table = open('output_table.csv', "w")
+output_table.write("strike,underlying,maturity,volatility,interestrate,call_price,pred_price,delta,pred_delta,theta,pred_theta,vega,pred_vega,rho,pred_rho\n")
+for i in range(100):
+    output_table.write(str(val_x_vals[i][0].item()) + str(val_x_vals[i][1].item()) + str(val_x_vals[i][2].item()) + str(val_x_vals[i][3].item()) + str(val_x_vals[i][4].item())
+                       +str(val_prices[i]) + str(pred_price[i])+
+                       str(delta[i]) + str(pred_delta[i]) +
+                       str(theta[i]) + str(pred_theta[i]) + 
+                       str(vega[i]) + str(pred_vega[i]) +
+                       str(rho[i]) + str(pred_rho[i]) + "\n")
+output_table.close()
 
 test_error = rmse_metric(val_prices, pred_price)
 print("test error: " + str(test_error))
@@ -340,29 +355,36 @@ theta_error = (rmse_metric(theta, pred_theta))
 vega_errors = (rmse_metric(vega, pred_vega))
 rho_errors = (rmse_metric(rho, pred_rho))
 
-
-plt.scatter(pred_price, val_prices, label='pred price vs actual')
+plt.scatter(val_prices, pred_price, label='pred price vs actual')
 plt.title('price MSE: ' + str(test_error))
-plt.xlabel('pred price')
-plt.ylabel('actual price')
+plt.xlabel('actual price')
+plt.ylabel('pred price')
 plt.savefig('goodcopy_output/final_test_price' + '.png', bbox_inches="tight")
 plt.clf()
 
 # ADD MSE'S to this plot
 plt.scatter(delta, pred_delta, label='delta test error')
-plt.title('delta residual MSE: ' + str(delta_error))
+plt.title('delta MSE: ' + str(delta_error))
+plt.xlabel('actual delta')
+plt.ylabel('pred delta')
 plt.savefig('goodcopy_output/final_test_delta' + '.png', bbox_inches="tight")
 plt.clf()
 plt.scatter(theta, pred_theta, label='theta test error')
-plt.title('theta residual MSE: ' + str(theta_error))
+plt.title('theta MSE: ' + str(theta_error))
+plt.xlabel('actual theta')
+plt.ylabel('pred theta')
 plt.savefig('goodcopy_output/final_test_theta' + '.png', bbox_inches="tight")
 plt.clf()
 plt.scatter(vega, pred_vega, label='vega test error')
-plt.title('vega residual MSE: ' + str(vega_errors))
+plt.title('vega MSE: ' + str(vega_errors))
+plt.xlabel('actual vega')
+plt.ylabel('pred vega')
 plt.savefig('goodcopy_output/final_test_vega' + '.png', bbox_inches="tight")
 plt.clf()
-plt.scatter(pred_rho, rho, label='rho test error')
-plt.title('rho residual MSE: ' + str(rho_errors))
+plt.scatter(rho, pred_rho, label='rho test error')
+plt.xlabel('actual rho')
+plt.ylabel('pred rho')
+plt.title('rho MSE: ' + str(rho_errors))
 plt.savefig('goodcopy_output/final_test_rho' + '.png', bbox_inches="tight")
 plt.clf()
 
@@ -407,28 +429,38 @@ for i in range(len(val_prices)):
 
     
 plt.scatter(val_prices, res_prices, label='delta test error')
-plt.title('price MSE: ' + str(test_error))
+plt.title('Residual plot - price MSE: ' + str(test_error))
+plt.xlabel('actual prices')
+plt.ylabel('actual - predicted price')
 plt.savefig('goodcopy_output/price_residual_plot' + '.png', bbox_inches="tight")
 plt.clf()
 
     
 plt.scatter(delta, res_delta, label='delta test error')
-plt.title('delta residual MSE: ' + str(delta_error))
+plt.title('Residual plot - delta MSE: ' + str(delta_error))
+plt.xlabel('actual delta')
+plt.ylabel('actual - predicted delta')
 plt.savefig('goodcopy_output/delta_residual_plot' + '.png', bbox_inches="tight")
 plt.clf()
 
 plt.scatter(theta, res_theta, label='theta test error')
-plt.title('theta residual MSE: ' + str(theta_error))
+plt.title('Residual plot - theta MSE: ' + str(theta_error))
+plt.xlabel('actual theta')
+plt.ylabel('actual - predicted theta')
 plt.savefig('goodcopy_output/theta_residual_plot' + '.png', bbox_inches="tight")
 plt.clf()
 
 plt.scatter(vega, res_vega, label='vega test error')
-plt.title('vega residual MSE: ' + str(theta_error))
+plt.title('Residual plot - vega MSE: ' + str(theta_error))
+plt.xlabel('actual vega')
+plt.ylabel('actual - predicted vega')
 plt.savefig('goodcopy_output/vega_residual_plot' + '.png', bbox_inches="tight")
 plt.clf()
 
 plt.scatter(rho, res_rho, label='rho test error')
-plt.title('rho residual MSE: ' + str(theta_error))
+plt.title('rho MSE: ' + str(theta_error))
+plt.xlabel('actual rho')
+plt.ylabel('actual - predicted rho')
 plt.savefig('goodcopy_output/rho_residual_plot' + '.png', bbox_inches="tight")
 plt.clf()
 
