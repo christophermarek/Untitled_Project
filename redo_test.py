@@ -119,7 +119,7 @@ prices = torch.tensor(Y.values, dtype=torch.float32)
 greeks = np.array(GREEKS.values)
 
 
-num_epoches = 1000000
+num_epoches = 1000
 
 # training_avg = 0
 # count = 0
@@ -340,53 +340,53 @@ for i in range(len(pred_greeks)):
 output_table = open('output_table.csv', "w")
 output_table.write("strike,underlying,maturity,volatility,interestrate,call_price,pred_price,delta,pred_delta,theta,pred_theta,vega,pred_vega,rho,pred_rho\n")
 for i in range(100):
-    output_table.write(str(val_x_vals[i][0].item()) + str(val_x_vals[i][1].item()) + str(val_x_vals[i][2].item()) + str(val_x_vals[i][3].item()) + str(val_x_vals[i][4].item())
-                       +str(val_prices[i]) + str(pred_price[i])+
-                       str(delta[i]) + str(pred_delta[i]) +
-                       str(theta[i]) + str(pred_theta[i]) + 
-                       str(vega[i]) + str(pred_vega[i]) +
-                       str(rho[i]) + str(pred_rho[i]) + "\n")
+    output_table.write(str(val_x_vals[i][0].item()) + "," + str(val_x_vals[i][1].item()) + "," + str(val_x_vals[i][2].item()) + "," + str(val_x_vals[i][3].item()) + "," + str(val_x_vals[i][4].item()) + "," +
+                       str(val_prices[i]) +"," + str(pred_price[i])+"," +
+                       str(delta[i].item()) +"," + str(pred_delta[i].item()) +"," +
+                       str(theta[i].item()) +"," + str(pred_theta[i].item()) + "," +
+                       str(vega[i].item()) +"," + str(pred_vega[i].item()) +"," +
+                       str(rho[i].item()) +"," + str(pred_rho[i].item()) + "\n")
 output_table.close()
 
-test_error = rmse_metric(val_prices, pred_price)
-print("test error: " + str(test_error))
-delta_error = (rmse_metric(delta, pred_delta))
-theta_error = (rmse_metric(theta, pred_theta))
-vega_errors = (rmse_metric(vega, pred_vega))
-rho_errors = (rmse_metric(rho, pred_rho))
+# test_error = rmse_metric(val_prices, pred_price)
+# print("test error: " + str(test_error))
+# delta_error = (rmse_metric(delta, pred_delta))
+# theta_error = (rmse_metric(theta, pred_theta))
+# vega_errors = (rmse_metric(vega, pred_vega))
+# rho_errors = (rmse_metric(rho, pred_rho))
 
-plt.scatter(val_prices, pred_price, label='pred price vs actual')
-plt.title('price MSE: ' + str(test_error))
-plt.xlabel('actual price')
-plt.ylabel('pred price')
-plt.savefig('goodcopy_output/final_test_price' + '.png', bbox_inches="tight")
-plt.clf()
+# plt.scatter(val_prices, pred_price, label='pred price vs actual')
+# plt.title('price MSE: ' + str(test_error))
+# plt.xlabel('actual price')
+# plt.ylabel('pred price')
+# plt.savefig('goodcopy_output/final_test_price' + '.png', bbox_inches="tight")
+# plt.clf()
 
-# ADD MSE'S to this plot
-plt.scatter(delta, pred_delta, label='delta test error')
-plt.title('delta MSE: ' + str(delta_error))
-plt.xlabel('actual delta')
-plt.ylabel('pred delta')
-plt.savefig('goodcopy_output/final_test_delta' + '.png', bbox_inches="tight")
-plt.clf()
-plt.scatter(theta, pred_theta, label='theta test error')
-plt.title('theta MSE: ' + str(theta_error))
-plt.xlabel('actual theta')
-plt.ylabel('pred theta')
-plt.savefig('goodcopy_output/final_test_theta' + '.png', bbox_inches="tight")
-plt.clf()
-plt.scatter(vega, pred_vega, label='vega test error')
-plt.title('vega MSE: ' + str(vega_errors))
-plt.xlabel('actual vega')
-plt.ylabel('pred vega')
-plt.savefig('goodcopy_output/final_test_vega' + '.png', bbox_inches="tight")
-plt.clf()
-plt.scatter(rho, pred_rho, label='rho test error')
-plt.xlabel('actual rho')
-plt.ylabel('pred rho')
-plt.title('rho MSE: ' + str(rho_errors))
-plt.savefig('goodcopy_output/final_test_rho' + '.png', bbox_inches="tight")
-plt.clf()
+# # ADD MSE'S to this plot
+# plt.scatter(delta, pred_delta, label='delta test error')
+# plt.title('delta MSE: ' + str(delta_error))
+# plt.xlabel('actual delta')
+# plt.ylabel('pred delta')
+# plt.savefig('goodcopy_output/final_test_delta' + '.png', bbox_inches="tight")
+# plt.clf()
+# plt.scatter(theta, pred_theta, label='theta test error')
+# plt.title('theta MSE: ' + str(theta_error))
+# plt.xlabel('actual theta')
+# plt.ylabel('pred theta')
+# plt.savefig('goodcopy_output/final_test_theta' + '.png', bbox_inches="tight")
+# plt.clf()
+# plt.scatter(vega, pred_vega, label='vega test error')
+# plt.title('vega MSE: ' + str(vega_errors))
+# plt.xlabel('actual vega')
+# plt.ylabel('pred vega')
+# plt.savefig('goodcopy_output/final_test_vega' + '.png', bbox_inches="tight")
+# plt.clf()
+# plt.scatter(rho, pred_rho, label='rho test error')
+# plt.xlabel('actual rho')
+# plt.ylabel('pred rho')
+# plt.title('rho MSE: ' + str(rho_errors))
+# plt.savefig('goodcopy_output/final_test_rho' + '.png', bbox_inches="tight")
+# plt.clf()
 
 
 
@@ -414,55 +414,55 @@ plt.clf()
 
 
 # RESIDUAL PLOT WOULD BE ACTUAL On x axis and residuals on y axis
-res_prices = []
-res_delta = []
-res_theta = []
-res_vega = []
-res_rho = []
+# res_prices = []
+# res_delta = []
+# res_theta = []
+# res_vega = []
+# res_rho = []
 
-for i in range(len(val_prices)):
-    res_prices.append(val_prices[i] - pred_price[i])
-    res_delta.append(delta[i] - pred_delta[i])
-    res_theta.append(theta[i] - pred_theta[i])
-    res_vega.append(vega[i] - pred_vega[i])
-    res_rho.append(rho[i] - pred_rho[i])
-
-    
-plt.scatter(val_prices, res_prices, label='delta test error')
-plt.title('Residual plot - price MSE: ' + str(test_error))
-plt.xlabel('actual prices')
-plt.ylabel('actual - predicted price')
-plt.savefig('goodcopy_output/price_residual_plot' + '.png', bbox_inches="tight")
-plt.clf()
+# for i in range(len(val_prices)):
+#     res_prices.append(val_prices[i] - pred_price[i])
+#     res_delta.append(delta[i] - pred_delta[i])
+#     res_theta.append(theta[i] - pred_theta[i])
+#     res_vega.append(vega[i] - pred_vega[i])
+#     res_rho.append(rho[i] - pred_rho[i])
 
     
-plt.scatter(delta, res_delta, label='delta test error')
-plt.title('Residual plot - delta MSE: ' + str(delta_error))
-plt.xlabel('actual delta')
-plt.ylabel('actual - predicted delta')
-plt.savefig('goodcopy_output/delta_residual_plot' + '.png', bbox_inches="tight")
-plt.clf()
+# plt.scatter(val_prices, res_prices, label='delta test error')
+# plt.title('Residual plot - price MSE: ' + str(test_error))
+# plt.xlabel('actual prices')
+# plt.ylabel('actual - predicted price')
+# plt.savefig('goodcopy_output/price_residual_plot' + '.png', bbox_inches="tight")
+# plt.clf()
 
-plt.scatter(theta, res_theta, label='theta test error')
-plt.title('Residual plot - theta MSE: ' + str(theta_error))
-plt.xlabel('actual theta')
-plt.ylabel('actual - predicted theta')
-plt.savefig('goodcopy_output/theta_residual_plot' + '.png', bbox_inches="tight")
-plt.clf()
+    
+# plt.scatter(delta, res_delta, label='delta test error')
+# plt.title('Residual plot - delta MSE: ' + str(delta_error))
+# plt.xlabel('actual delta')
+# plt.ylabel('actual - predicted delta')
+# plt.savefig('goodcopy_output/delta_residual_plot' + '.png', bbox_inches="tight")
+# plt.clf()
 
-plt.scatter(vega, res_vega, label='vega test error')
-plt.title('Residual plot - vega MSE: ' + str(theta_error))
-plt.xlabel('actual vega')
-plt.ylabel('actual - predicted vega')
-plt.savefig('goodcopy_output/vega_residual_plot' + '.png', bbox_inches="tight")
-plt.clf()
+# plt.scatter(theta, res_theta, label='theta test error')
+# plt.title('Residual plot - theta MSE: ' + str(theta_error))
+# plt.xlabel('actual theta')
+# plt.ylabel('actual - predicted theta')
+# plt.savefig('goodcopy_output/theta_residual_plot' + '.png', bbox_inches="tight")
+# plt.clf()
 
-plt.scatter(rho, res_rho, label='rho test error')
-plt.title('rho MSE: ' + str(theta_error))
-plt.xlabel('actual rho')
-plt.ylabel('actual - predicted rho')
-plt.savefig('goodcopy_output/rho_residual_plot' + '.png', bbox_inches="tight")
-plt.clf()
+# plt.scatter(vega, res_vega, label='vega test error')
+# plt.title('Residual plot - vega MSE: ' + str(theta_error))
+# plt.xlabel('actual vega')
+# plt.ylabel('actual - predicted vega')
+# plt.savefig('goodcopy_output/vega_residual_plot' + '.png', bbox_inches="tight")
+# plt.clf()
+
+# plt.scatter(rho, res_rho, label='rho test error')
+# plt.title('rho MSE: ' + str(theta_error))
+# plt.xlabel('actual rho')
+# plt.ylabel('actual - predicted rho')
+# plt.savefig('goodcopy_output/rho_residual_plot' + '.png', bbox_inches="tight")
+# plt.clf()
 
 
 
