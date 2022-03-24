@@ -1,4 +1,5 @@
 from math import sqrt
+import math
 from re import A
 import numpy as np
 import torch
@@ -7,11 +8,13 @@ from torch.distributions import Normal
 import random
 from torch import nn, optim
 import pandas as pd
-from scipy.stats import gamma
+from scipy.stats import gamma, beta
+from py_vollib.black_scholes_merton import black_scholes_merton
+from scipy import stats
 
 # ensure reproducability
-# np.random.seed(0)
-# torch.manual_seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
 
 # helper to calculate errors for greek
 def rmse_metric(actual, predicted):
@@ -24,7 +27,7 @@ def rmse_metric(actual, predicted):
 
 
 model = torch.nn.Sequential(
-    torch.nn.Linear(5, 10),
+    torch.nn.Linear(6, 10),
     torch.nn.SiLU(),
     torch.nn.Linear(10, 10),
     torch.nn.SiLU(),
@@ -38,39 +41,51 @@ model = torch.nn.Sequential(
 lossfn = nn.MSELoss()
 opt = torch.optim.Adam(model.parameters(), lr=0.0001)
 
+# old pricing function, no dividends
 std_norm_cdf = Normal(0, 1).cdf
+# def std_norm_pdf(x): return torch.exp(Normal(0, 1).log_prob(x))
+# def bs_price(right, K, S, T, sigma, r):
+#     d_1 = (1 / (sigma * torch.sqrt(T))) * \
+#           (torch.log(S / K) + (r + (torch.square(sigma) / 2)) * T)
+#     d_2 = d_1 - sigma * torch.sqrt(T)
 
-def std_norm_pdf(x): return torch.exp(Normal(0, 1).log_prob(x))
+#     if right == "C":
+#         C = std_norm_cdf(d_1) * S - std_norm_cdf(d_2) * \
+#         K * torch.exp(-r * T)
+#         return C
 
-def bs_price(right, K, S, T, sigma, r):
-    d_1 = (1 / (sigma * torch.sqrt(T))) * \
-          (torch.log(S / K) + (r + (torch.square(sigma) / 2)) * T)
-    d_2 = d_1 - sigma * torch.sqrt(T)
+#     elif right == "P":
+#         P = std_norm_cdf(-d_2) * K * torch.exp(-r * T) - \
+#             std_norm_cdf(-d_1) * S
+#         return P
 
-    if right == "C":
-        C = std_norm_cdf(d_1) * S - std_norm_cdf(d_2) * \
-        K * torch.exp(-r * T)
-        return C
 
-    elif right == "P":
-        P = std_norm_cdf(-d_2) * K * torch.exp(-r * T) - \
-            std_norm_cdf(-d_1) * S
-        return P
+def black_scholes (cp, s, k, t, v, rf, div):
+        """ Price an option using the Black-Scholes model.
+        cp: +1/-1 for call/put
+        s: initial stock price
+        k: strike price
+        t: expiration time
+        v: volatility
+        rf: risk-free rate
+        div: dividend
+        """
 
+        d1 = (torch.log(s/k)+(rf-div+0.5*torch.pow(v,2))*t)/(v*torch.sqrt(t))
+        d2 = d1 - v*torch.sqrt(t)
+
+        optprice = (cp*s*torch.exp(-div*t)*std_norm_cdf(cp*d1)) - (cp*k*torch.exp(-rf*t)*std_norm_cdf(cp*d2))
+        return optprice
 
 def gen_dataset(size):
 
     # will reset file every time it runs
     file = open('autodiff_dataset.csv', "w")
     file.write(
-        "strike,underlying,maturity,volatility,interestrate,call_price,delta,theta,vega,rho\n")
+        "strike,underlying,maturity,volatility,interestrate,dividends,call_price,delta,theta,vega,rho,epsilon\n")
 
     for i in range(size):
         right = "C"
-        # moneyness = random.uniform(0.8, 1.2)
-
-        # strike = 100
-        # underlyingPrice = strike * moneyness
         
         # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
         # how the dataset was calculated 
@@ -82,37 +97,48 @@ def gen_dataset(size):
         # total time to expiry left in years Theta: {T.grad}
         T = torch.tensor(random.uniform(0.014, 1), requires_grad=True)
         # volatility "Vega: {sigma.grad}
-        sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+        # sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+        sigma = torch.tensor(beta.rvs(a=2, b=5, size=1)[0] + 0.001, requires_grad=True)
         # risk free interest rate Rho: {r.grad}
-        r = torch.tensor(random.uniform(0.00, 0.1), requires_grad=True)
+        r = torch.tensor(random.uniform(0.01, 0.18), requires_grad=True)
+        # dividend rate
+        div_rate = torch.tensor(random.uniform(0.00, 0.18), requires_grad=True)
 
-        price = bs_price(right, K, S, T, sigma, r)
+        # cp: +1/-1 for call/put
+        # s: initial stock price
+        # k: strike price
+        # t: expiration time
+        # v: volatility
+        # rf: risk-free rate
+        # div: dividend
+        price = black_scholes(1, S, K, T, sigma, r, div_rate)
+
+        # price = bs_price(right, K, S, T, sigma, r)
 
         price.backward()
 
         file.write(str(K.item()) + "," + str(S.item()) +
-                   "," + str(T.item()) + "," + str(sigma.item()) + "," + str(r.item()) + "," + str(price.item()) + "," + str(S.grad.item()) +
-                   "," + str(T.grad.item()) + "," + str(sigma.grad.item()) + "," + str(r.grad.item()) + "\n")
+                   "," + str(T.item()) + "," + str(sigma.item()) + "," + str(r.item()) + "," + str(div_rate.item()) + "," + str(price.item()) + "," + str(S.grad.item()) +
+                   "," + str(T.grad.item()) + "," + str(sigma.grad.item()) + "," + str(r.grad.item()) + "," + str(div_rate.grad.item()) + "\n")
     print("done generating data")
 
     file.close()
 
 
-# gen_dataset(2000000)
+gen_dataset(1000000)
 
 # load dataset
 df = pd.read_csv('autodiff_dataset.csv')
-X = df.drop(columns=['call_price', 'delta', 'theta', 'vega', 'rho'])
-Y = df.drop(columns=['strike', 'underlying', 'maturity', 'volatility', 'interestrate', 'delta','theta','vega','rho'])
-GREEKS = df.drop(columns=['strike', 'underlying', 'maturity', 'volatility', 'interestrate', 'call_price'])
+X = df.drop(columns=['call_price', 'delta', 'theta', 'vega', 'rho', 'epsilon'])
+Y = df.drop(columns=['strike', 'underlying', 'maturity', 'volatility', 'interestrate', 'dividends', 'delta','theta','vega','rho', 'epsilon'])
+GREEKS = df.drop(columns=['strike', 'underlying', 'maturity', 'volatility', 'interestrate', 'dividends', 'call_price'])
 
 x_vals = torch.tensor(X.values, dtype=torch.float32)
 prices = torch.tensor(Y.values, dtype=torch.float32)
 # can this just be an array instead, dont need to track grad as this is only used for validation
 greeks = np.array(GREEKS.values)
 
-
-num_epoches = 2000000
+num_epoches = 1000000
 
 training_avg = 0
 count = 0
@@ -161,11 +187,9 @@ for m in range(num_epoches):
         test_greeks = []
         # generate validation set
         for i in range(100):
-            right = "C"
-            # moneyness = random.uniform(0.8, 1.2)
-            # strike = 1.0
-            # underlyingPrice = strike * moneyness
-
+            # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
+            # how the dataset was calculated 
+            
             # Strike price
             K = torch.tensor(gamma.rvs(100, size=1, scale=1)[0], requires_grad=True)
             # Underlying price Delta: {S.grad}
@@ -173,20 +197,30 @@ for m in range(num_epoches):
             # total time to expiry left in years Theta: {T.grad}
             T = torch.tensor(random.uniform(0.014, 1), requires_grad=True)
             # volatility "Vega: {sigma.grad}
-            sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+            # sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+            sigma = torch.tensor(beta.rvs(a=2, b=5, size=1)[0] + 0.001, requires_grad=True)
             # risk free interest rate Rho: {r.grad}
-            r = torch.tensor(random.uniform(0.00, 0.1), requires_grad=True)
+            r = torch.tensor(random.uniform(0.01, 0.18), requires_grad=True)
+            # dividend rate
+            div_rate = torch.tensor(random.uniform(0.00, 0.18), requires_grad=True)
 
-            price = bs_price(right, K, S, T, sigma, r)
+            # cp: +1/-1 for call/put
+            # s: initial stock price
+            # k: strike price
+            # t: expiration time
+            # v: volatility
+            # rf: risk-free rate
+            # div: dividend
+            price = black_scholes(1, S, K, T, sigma, r, div_rate)
 
             price.backward()
             
             test_x_vals.append(torch.tensor(
-            [K.item(), S.item(), T.item(), sigma.item(), r.item()], dtype=torch.float32))
+            [K.item(), S.item(), T.item(), sigma.item(), r.item(), div_rate.item()], dtype=torch.float32))
             test_prices.append(price.item())
             
             # "strike,underlying,maturity,volatility,interestrate,call_price,delta,theta,vega,rho\n")
-            test_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item()]))
+            test_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item(), div_rate.grad.item()]))
         
         
         pred_prices = []
@@ -282,7 +316,9 @@ val_greeks = []
 # 20% size of test set
 print('generating validation set')
 for i in range(int(num_epoches* 0.2)):
-    right = "C"
+    # https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2513&context=gradreports
+    # how the dataset was calculated 
+        
     # Strike price
     K = torch.tensor(gamma.rvs(100, size=1, scale=1)[0], requires_grad=True)
     # Underlying price Delta: {S.grad}
@@ -290,19 +326,30 @@ for i in range(int(num_epoches* 0.2)):
     # total time to expiry left in years Theta: {T.grad}
     T = torch.tensor(random.uniform(0.014, 1), requires_grad=True)
     # volatility "Vega: {sigma.grad}
-    sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+    # sigma = torch.tensor(random.uniform(0.1, 0.4), requires_grad=True)
+    sigma = torch.tensor(beta.rvs(a=2, b=5, size=1)[0] + 0.001, requires_grad=True)
     # risk free interest rate Rho: {r.grad}
-    r = torch.tensor(random.uniform(0.00, 0.1), requires_grad=True)
-    price = bs_price(right, K, S, T, sigma, r)
+    r = torch.tensor(random.uniform(0.01, 0.18), requires_grad=True)
+    # dividend rate
+    div_rate = torch.tensor(random.uniform(0.00, 0.18), requires_grad=True)
+
+    # cp: +1/-1 for call/put
+    # s: initial stock price
+    # k: strike price
+    # t: expiration time
+    # v: volatility
+    # rf: risk-free rate
+    # div: dividend
+    price = black_scholes(1, S, K, T, sigma, r, div_rate)
 
     price.backward()
             
     val_x_vals.append(torch.tensor(
-    [K.item(), S.item(), T.item(), sigma.item(), r.item()], dtype=torch.float32))
+    [K.item(), S.item(), T.item(), sigma.item(), r.item(), div_rate.item()], dtype=torch.float32))
     val_prices.append(price.item())
             
     # "strike,underlying,maturity,volatility,interestrate,call_price,delta,theta,vega,rho\n")
-    val_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item()]))
+    val_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item(), div_rate.grad.item()]))
 
 
 # use last 20% as a validation set
@@ -328,7 +375,7 @@ for i in range(len(pred_greeks)):
 # output to table for review
 output_table = open('output_table.csv', "w")
 output_table.write("strike,underlying,maturity,volatility,interestrate,call_price,pred_price,delta,pred_delta,theta,pred_theta,vega,pred_vega,rho,pred_rho\n")
-for i in range(100):
+for i in range(10):
     output_table.write(str(val_x_vals[i][0].item()) + "," + str(val_x_vals[i][1].item()) + "," + str(val_x_vals[i][2].item()) + "," + str(val_x_vals[i][3].item()) + "," + str(val_x_vals[i][4].item()) + "," +
                        str(val_prices[i]) +"," + str(pred_price[i])+"," +
                        str(delta[i].item()) +"," + str(pred_delta[i].item()) +"," +
