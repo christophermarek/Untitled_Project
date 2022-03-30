@@ -31,6 +31,7 @@ model = torch.nn.Sequential(
     torch.nn.Linear(400, 1),
     torch.nn.SiLU()
 )
+
 # model = torch.nn.Sequential(
 #     torch.nn.Linear(5, 3),
 #     torch.nn.SiLU(),
@@ -190,14 +191,9 @@ for m in range(num_epoches):
             [K.item(), S.item(), T.item(), sigma.item(), r.item()], dtype=torch.float32))
             test_prices.append(S.grad.item())
             
-            # "strike,underlying,maturity,volatility,interestrate
-            #           ,delta, theta, vega,    rho\n")
-            # test_greeks.append(np.array([S.grad.item(), T.grad.item(), sigma.grad.item(), r.grad.item()]))
         
         
         pred_prices = []
-        # pred_greeks = []
-        # run model on validation set
         for i in range(len(test_x_vals)):
             test_x_vals[i].requires_grad = True
             z = model(test_x_vals[i])
@@ -206,34 +202,12 @@ for m in range(num_epoches):
             # pred_greeks.append(test_x_vals[i].grad)
             
         test_error.append(rmse_metric(test_prices, pred_prices))
-        # THIS IS AN EASY INDEX ERROR TO MIXUP SINCE THE GREEKS AND XVALUES uSE DIFFERENT INDICES
-        
-        # test_delta, test_theta, test_vega, test_rho, pred_delta, pred_theta, pred_vega, pred_rho = [], [], [], [], [], [], [], []
-        # for i in range(len(pred_greeks)):
-        #     pred_delta.append(pred_greeks[i][1])
-        #     pred_theta.append(pred_greeks[i][2])
-        #     pred_vega.append(pred_greeks[i][3])
-        #     pred_rho.append(pred_greeks[i][4])
-        # for i in range(len(test_greeks)):
-        #     test_delta.append(test_greeks[i][0])
-        #     test_theta.append(test_greeks[i][1])
-        #     test_vega.append(test_greeks[i][2])
-        #     test_rho.append(test_greeks[i][3])
-            
-        
-        # delta_error.append(rmse_metric(test_delta, pred_delta))
-        # theta_error.append(rmse_metric(test_theta, pred_theta))
-        # vega_error.append(rmse_metric(test_vega, pred_vega))
-        # rho_error.append(rmse_metric(test_rho, pred_rho))
+
 
 print("training complete")
 print('generating plots of training error and of the test errors')
 
 plt.plot(list(range(0, len(test_error))), test_error,  label='price test errors')
-# plt.plot(list(range(0, len(test_error))), delta_error,  label='delta test errors')
-# plt.plot(list(range(0, len(test_error))), theta_error,  label='theta test errors')
-# plt.plot(list(range(0, len(test_error))), vega_error,  label='vega test errors')
-# plt.plot(list(range(0, len(test_error))), rho_error,  label='rho test errors')
 plt.title('test errors')
 plt.legend()
 plt.savefig('delta_output/price_test_error' + '.png', bbox_inches="tight")
@@ -252,7 +226,7 @@ plt.savefig('delta_output/' + "stricttrain" + '.png', bbox_inches="tight")
 plt.clf()
 
 # save model for easy testing of final output
-torch.save(model.state_dict(), 'auto_diff_greeks+' + str(num_epoches) + '.ckpt')
+torch.save(model.state_dict(), 'delta.ckpt')
 # model.load_state_dict(torch.load('auto_diff_greeks+' + str(num_epoches) + '.ckpt'))
 # model.load_state_dict(torch.load('auto_diff_greeks+10000.ckpt'))
 
@@ -322,24 +296,9 @@ for i in range(int(num_epoches*0.2)):
     z = model(val_x_vals[i])
     pred_price.append(z.item())
     z.sum().backward()
-    # pred_greeks.append(val_x_vals[i].grad)
-    # delta.append(greeks[i][0])
-    # theta.append(greeks[i][1])
-    # vega.append(greeks[i][2])
-    # rho.append(greeks[i][3])
 
-# for i in range(len(pred_greeks)):
-#     pred_delta.append(pred_greeks[i][1])
-#     pred_theta.append(pred_greeks[i][2])
-#     pred_vega.append(pred_greeks[i][3])
-#     pred_rho.append(pred_greeks[i][4])
 
 test_error = rmse_metric(val_prices, pred_price)
-# print("test error: " + str(test_error))
-# delta_error = (rmse_metric(delta, pred_delta))
-# theta_error = (rmse_metric(theta, pred_theta))
-# vega_errors = (rmse_metric(vega, pred_vega))
-# rho_errors = (rmse_metric(rho, pred_rho))
 
 
 plt.scatter(pred_price, val_prices, label='pred price vs actual')
@@ -348,90 +307,3 @@ plt.xlabel('pred delta')
 plt.ylabel('actual delta')
 plt.savefig('delta_output/final_test_price' + '.png', bbox_inches="tight")
 plt.clf()
-
-# ADD MSE'S to this plot
-# plt.scatter(delta, pred_delta, label='delta test error')
-# plt.title('delta residual MSE: ' + str(delta_error))
-# plt.savefig('goodcopy_output/final_test_delta' + '.png', bbox_inches="tight")
-# plt.clf()
-# plt.scatter(theta, pred_theta, label='theta test error')
-# plt.title('theta residual MSE: ' + str(theta_error))
-# plt.savefig('goodcopy_output/final_test_theta' + '.png', bbox_inches="tight")
-# plt.clf()
-# plt.scatter(vega, pred_vega, label='vega test error')
-# plt.title('vega residual MSE: ' + str(vega_errors))
-# plt.savefig('goodcopy_output/final_test_vega' + '.png', bbox_inches="tight")
-# plt.clf()
-# plt.scatter(pred_rho, rho, label='rho test error')
-# plt.title('rho residual MSE: ' + str(rho_errors))
-# plt.savefig('goodcopy_output/final_test_rho' + '.png', bbox_inches="tight")
-# plt.clf()
-
-
-
-# FIGURE THIS PART OUT ASAP
-# plt.scatter(list(range(0, len(val_prices))), val_prices - pred_price, label='residual for price')
-# plt.savefig('goodcopy_output/final_test_price_residual' + '.png', bbox_inches="tight")
-# plt.clf()
-
-# plt.scatter(delta, pred_delta, label='delta test error')
-# plt.title('delta residual MSE: ' + str(delta_error))
-# plt.savefig('goodcopy_output/final_test_delta' + '.png', bbox_inches="tight")
-# plt.clf()
-# plt.scatter(theta, pred_theta, label='theta test error')
-# plt.title('theta residual MSE: ' + str(theta_error))
-# plt.savefig('goodcopy_output/final_test_theta' + '.png', bbox_inches="tight")
-# plt.clf()
-# plt.scatter(vega, pred_vega, label='vega test error')
-# plt.title('vega residual MSE: ' + str(vega_errors))
-# plt.savefig('goodcopy_output/final_test_vega' + '.png', bbox_inches="tight")
-# plt.clf()
-# plt.scatter(pred_rho, rho, label='rho test error')
-# plt.title('rho residual MSE: ' + str(rho_errors))
-# plt.savefig('goodcopy_output/final_test_rho' + '.png', bbox_inches="tight")
-# plt.clf()
-
-
-# RESIDUAL PLOT WOULD BE ACTUAL On x axis and residuals on y axis
-# res_prices = []
-# res_delta = []
-# res_theta = []
-# res_vega = []
-# res_rho = []
-
-# for i in range(len(val_prices)):
-#     res_prices.append(val_prices[i] - pred_price[i])
-#     res_delta.append(delta[i] - pred_delta[i])
-#     res_theta.append(theta[i] - pred_theta[i])
-#     res_vega.append(vega[i] - pred_vega[i])
-#     res_rho.append(rho[i] - pred_rho[i])
-
-    
-# plt.scatter(val_prices, res_prices, label='delta test error')
-# plt.title('price MSE: ' + str(test_error))
-# plt.savefig('delta_output/price_residual_plot' + '.png', bbox_inches="tight")
-# plt.clf()
-
-    
-# plt.scatter(delta, res_delta, label='delta test error')
-# plt.title('delta residual MSE: ' + str(delta_error))
-# plt.savefig('goodcopy_output/delta_residual_plot' + '.png', bbox_inches="tight")
-# plt.clf()
-
-# plt.scatter(theta, res_theta, label='theta test error')
-# plt.title('theta residual MSE: ' + str(theta_error))
-# plt.savefig('goodcopy_output/theta_residual_plot' + '.png', bbox_inches="tight")
-# plt.clf()
-
-# plt.scatter(vega, res_vega, label='vega test error')
-# plt.title('vega residual MSE: ' + str(theta_error))
-# plt.savefig('goodcopy_output/vega_residual_plot' + '.png', bbox_inches="tight")
-# plt.clf()
-
-# plt.scatter(rho, res_rho, label='rho test error')
-# plt.title('rho residual MSE: ' + str(theta_error))
-# plt.savefig('goodcopy_output/rho_residual_plot' + '.png', bbox_inches="tight")
-# plt.clf()
-
-
-
